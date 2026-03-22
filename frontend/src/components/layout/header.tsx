@@ -137,7 +137,7 @@ export function Header() {
 
             {/* ---- Results dropdown ---- */}
             {searchOpen && debouncedQuery.trim() && (
-              <div className="absolute top-full right-0 mt-2 w-80 bg-neutral-900 border border-neutral-700 rounded-xl shadow-2xl overflow-hidden z-50 animate-fade-in-up">
+              <div className="absolute top-full right-0 mt-2 w-80 bg-neutral-900 border border-neutral-700 rounded-lg shadow-2xl overflow-hidden z-50 animate-fade-in-up">
                 {searchResults.length > 0 ? (
                   <ul className="max-h-72 overflow-y-auto divide-y divide-neutral-800">
                     {searchResults.map((movie) => (

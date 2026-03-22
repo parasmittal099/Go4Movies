@@ -82,7 +82,7 @@ export function SignUpForm() {
             name="fullName"
             type="text"
             placeholder="John Doe"
-            className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
+            className="w-full h-12 pl-10 pr-4 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
             required
@@ -111,7 +111,7 @@ export function SignUpForm() {
             name="username"
             type="text"
             placeholder="john_doe"
-            className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
+            className="w-full h-12 pl-10 pr-4 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
             value={username}
             onChange={(event) => setUsername(event.target.value)}
             minLength={3}
@@ -141,7 +141,7 @@ export function SignUpForm() {
             name="email"
             type="email"
             placeholder="you@example.com"
-            className="w-full h-12 pl-10 pr-4 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
+            className="w-full h-12 pl-10 pr-4 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
@@ -170,7 +170,7 @@ export function SignUpForm() {
             name="password"
             type={showPassword ? "text" : "password"}
             placeholder="Create a password"
-            className="w-full h-12 pl-10 pr-10 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
+            className="w-full h-12 pl-10 pr-10 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             minLength={6}
@@ -217,7 +217,7 @@ export function SignUpForm() {
             name="confirmPassword"
             type={showConfirmPassword ? "text" : "password"}
             placeholder="Confirm your password"
-            className="w-full h-12 pl-10 pr-10 rounded-xl border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
+            className="w-full h-12 pl-10 pr-10 rounded-lg border border-border bg-card text-foreground text-sm placeholder:text-muted-foreground/60 outline-none focus:ring-2 focus:ring-ring/40 focus:border-primary transition-all"
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
             required
@@ -258,7 +258,7 @@ export function SignUpForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="h-12 rounded-xl bg-primary text-primary-foreground text-sm font-medium tracking-wide shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all mt-1"
+        className="h-12 rounded-lg bg-primary text-primary-foreground text-sm font-medium tracking-wide shadow-md shadow-primary/20 hover:shadow-lg hover:shadow-primary/30 hover:brightness-110 active:scale-[0.98] transition-all mt-1"
       >
         {isSubmitting ? "Creating account..." : "Create Account"}
       </button>
@@ -281,7 +281,7 @@ export function SignUpForm() {
       {/* <div className="grid grid-cols-2 gap-3">
         <button
           type="button"
-          className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-foreground text-sm font-medium hover:bg-secondary transition-colors"
+          className="flex items-center justify-center gap-2 h-11 rounded-lg border border-border bg-card text-foreground text-sm font-medium hover:bg-secondary transition-colors"
         >
           <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
@@ -293,7 +293,7 @@ export function SignUpForm() {
         </button>
         <button
           type="button"
-          className="flex items-center justify-center gap-2 h-11 rounded-xl border border-border bg-card text-foreground text-sm font-medium hover:bg-secondary transition-colors"
+          className="flex items-center justify-center gap-2 h-11 rounded-lg border border-border bg-card text-foreground text-sm font-medium hover:bg-secondary transition-colors"
         >
           <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M16.365 1.43c0 1.14-.493 2.27-1.177 3.08-.744.9-1.99 1.57-2.987 1.57-.18 0-.36-.02-.53-.06-.17-.04-.28-.06-.33-.06 0-.12-.03-.29-.03-.47 0-1.04.46-2.18 1.22-3.01C13.27 1.73 14.46 1 15.81 1c.12 0 .25.02.37.04.13.02.2.04.19.04v.35l-.01.04zm3.635 6.69c-.1.06-1.88 1.08-1.88 3.33 0 2.6 2.28 3.52 2.35 3.55-.01.05-.36 1.27-1.21 2.5-.76 1.09-1.55 2.18-2.78 2.18-.59 0-.99-.19-1.41-.39-.44-.21-.9-.42-1.62-.42-.76 0-1.25.22-1.72.43-.4.18-.78.36-1.31.39h-.09c-1.17 0-2.3-1.26-3.24-2.58C5.78 14.94 5 12.41 5 10.02c0-3.78 2.46-5.78 4.87-5.78.75 0 1.38.25 1.92.46.44.17.83.32 1.2.32.32 0 .67-.14 1.07-.3.6-.24 1.33-.53 2.18-.53 1.42 0 2.84.82 3.76 2.2v.03z" />
