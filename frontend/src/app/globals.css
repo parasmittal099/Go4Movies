@@ -3,6 +3,9 @@
 @theme inline {
   /* Brand */
   --color-primary: #ea2a33;
+  --color-seat-available: #4a4a4a;
+  --color-seat-selected: #22c55e;
+  --color-seat-booked: #333333;
 
   /* Backgrounds */
   --color-background: #121212;

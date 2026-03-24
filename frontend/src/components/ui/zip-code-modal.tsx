@@ -94,7 +94,7 @@ export function ZipCodeModal({ onSelectLocation, onClose }: ZipCodeModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full max-w-[640px] bg-surface-dark border border-neutral-800 rounded-xl shadow-2xl flex flex-col overflow-hidden animate-fade-in-up">
+      <div className="relative w-full max-w-[640px] bg-surface-dark border border-neutral-800 rounded-lg shadow-2xl flex flex-col overflow-hidden animate-fade-in-up">
         {/* Close button */}
         {zipCode && (
           <button
@@ -189,7 +189,7 @@ export function ZipCodeModal({ onSelectLocation, onClose }: ZipCodeModalProps) {
                 <button
                   key={loc.id}
                   onClick={() => handleSelect(loc.zipcode)}
-                  className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl hover:bg-surface-dark-hover text-neutral-400 hover:text-white transition-all group cursor-pointer border border-transparent hover:border-neutral-700"
+                  className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-surface-dark-hover text-neutral-400 hover:text-white transition-all group cursor-pointer border border-transparent hover:border-neutral-700"
                 >
                   <div className="bg-neutral-800 rounded-full w-14 h-14 flex items-center justify-center group-hover:bg-neutral-700 group-hover:shadow-[0_0_20px_rgba(234,42,51,0.15)] transition-all ring-1 ring-neutral-700 group-hover:ring-primary/40 overflow-hidden relative">
                     <span className="material-symbols-outlined text-2xl opacity-60 group-hover:opacity-100 transition-opacity">
@@ -212,7 +212,7 @@ export function ZipCodeModal({ onSelectLocation, onClose }: ZipCodeModalProps) {
             )}
 
             {!loading && (
-              <button className="flex flex-col items-center justify-center gap-2 p-3 rounded-xl hover:bg-surface-dark-hover text-primary transition-all group cursor-pointer border border-transparent hover:border-neutral-700">
+              <button className="flex flex-col items-center justify-center gap-2 p-3 rounded-lg hover:bg-surface-dark-hover text-primary transition-all group cursor-pointer border border-transparent hover:border-neutral-700">
                 <div className="bg-neutral-800 rounded-full w-14 h-14 flex items-center justify-center group-hover:bg-primary/20 group-hover:shadow-md transition-all ring-1 ring-neutral-700 group-hover:ring-primary/60">
                   <span className="material-symbols-outlined text-2xl">
                     apps
