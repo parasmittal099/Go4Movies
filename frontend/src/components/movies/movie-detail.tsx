@@ -1,18 +1,22 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Movie } from "@/lib/types"
+import { useState, useEffect, useMemo } from "react"
+import { Movie, ShowtimesResponse } from "@/lib/types"
 
 interface MovieDetailProps {
   movie: Movie
-  onBookTickets: () => void
+  showtimes: ShowtimesResponse | null
+  showtimesLoading: boolean
+  onBookTickets: (showtimeId: number) => void
 }
 
 type TimingStatus = "available" | "filling_fast" | "sold_out"
 
 interface Timing {
   time: string
-  status: TimingStatus | "selected" // Note: the prompt mentioned 'selected' as a status from API, but we'll override with local state
+  status: TimingStatus
+  showtimeId: number
+  priceMultiplier: number
 }
 
 interface Screen {
@@ -24,14 +28,11 @@ interface Cinema {
   id: string
   name: string
   address: string
-  distance: string
-  badge: string
-  amenities: string[]
-  favorited: boolean
   screens: Screen[]
 }
 
 interface SelectedTiming {
+  showtimeId: number
   cinemaId: string
   cinemaName: string
   screenType: string
@@ -39,106 +40,70 @@ interface SelectedTiming {
   price: number
 }
 
-// Dummy Data
-const DUMMY_DATES = [
-  { date: "2024-10-24", day: "TODAY" },
-  { date: "2024-10-25", day: "FRI" },
-  { date: "2024-10-26", day: "SAT" },
-  { date: "2024-10-27", day: "SUN" },
-  { date: "2024-10-28", day: "MON" },
-  { date: "2024-10-29", day: "TUE" },
-]
+const BASE_TICKET_PRICE = 15
 
-const DUMMY_CINEMAS: Cinema[] = [
-  {
-    id: "1",
-    name: "Grand Cinema Downtown",
-    address: "123 Main Street, Downtown District",
-    distance: "0.8 mi",
-    badge: "M-TICKET",
-    amenities: ["F&B Available", "Wheelchair Access"],
-    favorited: true,
-    screens: [
-      {
-        type: "IMAX 2D",
-        timings: [
-          { time: "10:30 AM", status: "available" },
-          { time: "01:45 PM", status: "available" },
-          { time: "05:00 PM", status: "filling_fast" },
-        ],
-      },
-      {
-        type: "STANDARD",
-        timings: [
-          { time: "11:15 AM", status: "available" },
-          { time: "02:30 PM", status: "available" },
-          { time: "06:45 PM", status: "sold_out" },
-          { time: "09:15 PM", status: "available" },
-        ],
-      },
-    ],
-  },
-  {
-    id: "2",
-    name: "Westside Mall Plex",
-    address: "45 Westside Blvd, Mall Level 3",
-    distance: "2.4 mi",
-    badge: "",
-    amenities: ["Wheelchair Access"],
-    favorited: false,
-    screens: [
-      {
-        type: "Dolby 3D",
-        timings: [
-          { time: "12:00 PM", status: "available" },
-          { time: "03:30 PM", status: "filling_fast" },
-        ],
-      },
-      {
-        type: "STANDARD",
-        timings: [
-          { time: "10:45 AM", status: "available" },
-          { time: "01:15 PM", status: "filling_fast" },
-          { time: "04:45 PM", status: "sold_out" },
-        ],
-      },
-    ],
-  },
-]
 
-export function MovieDetail({ movie, onBookTickets }: MovieDetailProps) {
-  const [selectedDate, setSelectedDate] = useState<string>("2024-10-24")
+
+export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets }: MovieDetailProps) {
+  const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTiming, setSelectedTiming] = useState<SelectedTiming | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
 
-  // Simulate API fetch delay
+  // Set initial selected date once showtimes arrive
   useEffect(() => {
-    setIsLoading(true)
-    const timeout = setTimeout(() => {
-      setIsLoading(false)
-    }, 600)
-    return () => clearTimeout(timeout)
-  }, [selectedDate])
+    if (showtimes?.dates?.length && !selectedDate) {
+      setSelectedDate(showtimes.dates[0])
+    }
+  }, [showtimes, selectedDate])
+
+  // Map API theaters → Cinema objects for the selected date
+  const cinemas = useMemo<Cinema[]>(() => {
+    if (!showtimes?.theaters || !selectedDate) return []
+    return showtimes.theaters
+      .map((theater) => {
+        const filtered = theater.showtimes.filter((st) => st.show_date === selectedDate)
+        const screenMap = new Map<string, Timing[]>()
+        for (const st of filtered) {
+          const key = st.format
+          if (!screenMap.has(key)) screenMap.set(key, [])
+          screenMap.get(key)!.push({
+            time: st.start_time,
+            status: "available",
+            showtimeId: st.id,
+            priceMultiplier: st.price_multiplier,
+          })
+        }
+        const screens: Screen[] = Array.from(screenMap.entries()).map(
+          ([type, timings]) => ({ type, timings })
+        )
+        return {
+          id: theater.theater_id.toString(),
+          name: theater.name,
+          address: theater.address || "",
+          screens,
+        } as Cinema
+      })
+      .filter((c) => c.screens.length > 0)
+  }, [showtimes, selectedDate])
 
   const handleTimingSelect = (cinema: Cinema, screen: Screen, timing: Timing) => {
     if (timing.status === "sold_out") return
-
     setSelectedTiming({
+      showtimeId: timing.showtimeId,
       cinemaId: cinema.id,
       cinemaName: cinema.name,
       screenType: screen.type,
       time: timing.time,
-      price: screen.type.includes("IMAX") || screen.type.includes("Dolby") ? 24.5 : 18.0,
+      price: Math.round(BASE_TICKET_PRICE * timing.priceMultiplier * 100) / 100,
     })
   }
 
   const handleBookTickets = () => {
     if (selectedTiming) {
-      onBookTickets()
+      onBookTickets(selectedTiming.showtimeId)
     }
   }
 
-  // Helper to parse dummy dates
+  // Helper to parse API dates (YYYY-MM-DD)
   const parseDate = (dateStr: string) => {
     const parts = dateStr.split("-")
     const d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]))
@@ -236,14 +201,16 @@ export function MovieDetail({ movie, onBookTickets }: MovieDetailProps) {
             </div>
           </div>
           <div className="flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
-            {DUMMY_DATES.map((d) => {
-              const { dayStr, monthStr } = parseDate(d.date)
-              const isActive = selectedDate === d.date
+            {(showtimes?.dates ?? []).map((date) => {
+              const { dayStr, monthStr } = parseDate(date)
+              const isActive = selectedDate === date
+              const today = new Date().toISOString().split("T")[0]
+              const dayLabel = date === today ? "TODAY" : new Date(date + "T00:00:00").toLocaleString("en-US", { weekday: "short" }).toUpperCase()
 
               return (
                 <button
-                  key={d.date}
-                  onClick={() => setSelectedDate(d.date)}
+                  key={date}
+                  onClick={() => { setSelectedDate(date); setSelectedTiming(null) }}
                   className={`flex flex-col items-center justify-center min-w-[72px] h-[84px] rounded-xl shrink-0 transition-all ${
                     isActive
                       ? "bg-primary text-white shadow-lg shadow-primary/20 transform hover:scale-105"
@@ -255,7 +222,7 @@ export function MovieDetail({ movie, onBookTickets }: MovieDetailProps) {
                       isActive ? "opacity-80" : "group-hover:text-primary"
                     }`}
                   >
-                    {d.day}
+                    {dayLabel}
                   </span>
                   <span className={`text-2xl font-bold mt-1 ${isActive ? "" : "text-white"}`}>{dayStr}</span>
                   <span className={`text-xs font-medium ${isActive ? "opacity-80" : ""}`}>{monthStr}</span>
@@ -280,13 +247,13 @@ export function MovieDetail({ movie, onBookTickets }: MovieDetailProps) {
             <span className="material-symbols-outlined text-sm">expand_more</span>
           </button>
           <div className="ml-auto text-sm text-neutral-400">
-            Showing <span className="text-white font-bold">{DUMMY_CINEMAS.length}</span> theaters nearby
+            Showing <span className="text-white font-bold">{cinemas.length}</span> theaters nearby
           </div>
         </div>
 
         {/* Theaters List */}
         <div className="flex flex-col gap-6">
-          {isLoading ? (
+          {showtimesLoading ? (
             // Skeleton Loader
             [1, 2].map((i) => (
               <div key={i} className="bg-surface-dark rounded-xl p-6 border border-neutral-800 animate-pulse">
@@ -295,54 +262,26 @@ export function MovieDetail({ movie, onBookTickets }: MovieDetailProps) {
                 <div className="h-10 w-full bg-neutral-800 rounded-lg"></div>
               </div>
             ))
+          ) : cinemas.length === 0 ? (
+            <div className="text-neutral-400 text-sm py-8 text-center">No showtimes available for this date.</div>
           ) : (
-            DUMMY_CINEMAS.map((cinema) => (
+            cinemas.map((cinema) => (
               <div
                 key={cinema.id}
                 className="bg-surface-dark rounded-xl p-6 border border-transparent hover:border-neutral-700 transition-all"
               >
                 <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-6">
                   <div className="flex items-start gap-4">
-                    <div
-                      className={`hidden sm:flex items-center justify-center w-10 h-10 rounded-full cursor-pointer transition-colors ${
-                        cinema.favorited
-                          ? "bg-primary/10 text-primary"
-                          : "bg-neutral-800 text-neutral-500 hover:text-primary"
-                      }`}
-                    >
-                      <span className="material-symbols-outlined">favorite</span>
+                    <div className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-neutral-800 text-neutral-500 hover:text-primary cursor-pointer transition-colors">
+                      <span className="material-symbols-outlined">theater_comedy</span>
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                        {cinema.name}
-                        {cinema.badge && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-lg bg-green-500/20 text-green-400 font-bold uppercase tracking-wider">
-                            {cinema.badge}
-                          </span>
-                        )}
-                      </h3>
-                      <p className="text-sm text-neutral-500 mt-1">
-                        {cinema.address} • {cinema.distance} away
-                      </p>
-                      <div className="flex gap-4 mt-3">
-                        {cinema.amenities.includes("F&B Available") && (
-                          <div className="flex items-center gap-1.5 text-xs text-amber-400">
-                            <span className="material-symbols-outlined text-[16px]">fastfood</span>
-                            <span>F&B Available</span>
-                          </div>
-                        )}
-                        {cinema.amenities.includes("Wheelchair Access") && (
-                          <div className="flex items-center gap-1.5 text-xs text-blue-400">
-                            <span className="material-symbols-outlined text-[16px]">accessible</span>
-                            <span>Wheelchair Access</span>
-                          </div>
-                        )}
-                      </div>
+                      <h3 className="text-lg font-bold text-white">{cinema.name}</h3>
+                      {cinema.address && (
+                        <p className="text-sm text-neutral-500 mt-1">{cinema.address}</p>
+                      )}
                     </div>
                   </div>
-                  <button className="text-xs font-medium text-primary hover:underline self-start mt-1">
-                    View Map
-                  </button>
                 </div>
 
                 <div className="space-y-4">
