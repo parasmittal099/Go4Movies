@@ -212,47 +212,166 @@ func Seed() {
 	// 5. SHOWTIMES
 	//    Spread across theaters so different cities have
 	//    different movie selections for testing.
+	//    5 days of shows with multiple time slots per day.
 	// -------------------------------------------------------
-	today := time.Now().Format("2006-01-02")
-	tomorrow := time.Now().Add(24 * time.Hour).Format("2006-01-02")
+	day0 := time.Now().Format("2006-01-02")
+	day1 := time.Now().Add(24 * time.Hour).Format("2006-01-02")
+	day2 := time.Now().Add(48 * time.Hour).Format("2006-01-02")
+	day3 := time.Now().Add(72 * time.Hour).Format("2006-01-02")
+	day4 := time.Now().Add(96 * time.Hour).Format("2006-01-02")
 
 	showtimes := []models.Showtime{
-		// Miami -- AMC Aventura (screen 0): The Karate Kid, Tomorrow Never Dies, Walk Hard
-		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: today, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
-		{MovieID: movies[2].ID, ScreenID: screens[0].ID, ShowDate: today, StartTime: "13:00", EndTime: "14:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
-		{MovieID: movies[4].ID, ScreenID: screens[0].ID, ShowDate: tomorrow, StartTime: "18:00", EndTime: "19:36", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		// ===== Miami -- AMC Aventura (screen 0, IMAX) =====
+		// The Karate Kid (140 min)
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day0, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day0, StartTime: "15:00", EndTime: "17:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day0, StartTime: "20:00", EndTime: "22:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day1, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day1, StartTime: "18:00", EndTime: "20:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day2, StartTime: "11:00", EndTime: "13:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day3, StartTime: "14:00", EndTime: "16:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day4, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[0].ID, ShowDate: day4, StartTime: "19:00", EndTime: "21:20", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		// Tomorrow Never Dies (119 min)
+		{MovieID: movies[2].ID, ScreenID: screens[0].ID, ShowDate: day0, StartTime: "13:00", EndTime: "14:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[0].ID, ShowDate: day1, StartTime: "13:00", EndTime: "14:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[0].ID, ShowDate: day2, StartTime: "16:00", EndTime: "17:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[0].ID, ShowDate: day3, StartTime: "10:00", EndTime: "11:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		// Walk Hard (96 min)
+		{MovieID: movies[4].ID, ScreenID: screens[0].ID, ShowDate: day1, StartTime: "15:30", EndTime: "17:06", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[4].ID, ScreenID: screens[0].ID, ShowDate: day2, StartTime: "19:00", EndTime: "20:36", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[4].ID, ScreenID: screens[0].ID, ShowDate: day4, StartTime: "14:00", EndTime: "15:36", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
 
-		// Miami -- Regal South Beach (screen 1): Ghost in the Shell, The Other Side of the Door, The Humbling
-		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: today, StartTime: "11:00", EndTime: "12:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[5].ID, ScreenID: screens[1].ID, ShowDate: today, StartTime: "15:00", EndTime: "16:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[9].ID, ScreenID: screens[1].ID, ShowDate: tomorrow, StartTime: "18:00", EndTime: "19:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// ===== Miami -- Regal South Beach (screen 1, Standard) =====
+		// Ghost in the Shell (107 min)
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day0, StartTime: "11:00", EndTime: "12:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day0, StartTime: "16:00", EndTime: "17:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day0, StartTime: "20:30", EndTime: "22:17", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day1, StartTime: "11:00", EndTime: "12:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day1, StartTime: "19:00", EndTime: "20:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day2, StartTime: "14:00", EndTime: "15:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day3, StartTime: "11:00", EndTime: "12:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[1].ID, ShowDate: day4, StartTime: "17:00", EndTime: "18:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// The Other Side of the Door (96 min)
+		{MovieID: movies[5].ID, ScreenID: screens[1].ID, ShowDate: day0, StartTime: "13:30", EndTime: "15:06", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[5].ID, ScreenID: screens[1].ID, ShowDate: day1, StartTime: "14:00", EndTime: "15:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[5].ID, ScreenID: screens[1].ID, ShowDate: day2, StartTime: "18:00", EndTime: "19:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[5].ID, ScreenID: screens[1].ID, ShowDate: day3, StartTime: "20:00", EndTime: "21:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// The Humbling (112 min)
+		{MovieID: movies[9].ID, ScreenID: screens[1].ID, ShowDate: day1, StartTime: "16:00", EndTime: "17:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[9].ID, ScreenID: screens[1].ID, ShowDate: day2, StartTime: "10:00", EndTime: "11:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[9].ID, ScreenID: screens[1].ID, ShowDate: day4, StartTime: "12:00", EndTime: "13:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
 
-		// Fort Lauderdale -- Cinemark (screen 2): The Karate Kid, Black Death, Nick and Norah's Infinite Playlist
-		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: today, StartTime: "10:30", EndTime: "12:50", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[3].ID, ScreenID: screens[2].ID, ShowDate: today, StartTime: "14:00", EndTime: "15:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[6].ID, ScreenID: screens[2].ID, ShowDate: tomorrow, StartTime: "19:00", EndTime: "20:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// ===== Fort Lauderdale -- Cinemark Paradise (screen 2, Standard) =====
+		// The Karate Kid (140 min)
+		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: day0, StartTime: "10:30", EndTime: "12:50", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: day0, StartTime: "16:00", EndTime: "18:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: day1, StartTime: "10:30", EndTime: "12:50", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: day1, StartTime: "19:00", EndTime: "21:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: day2, StartTime: "13:00", EndTime: "15:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: day3, StartTime: "10:30", EndTime: "12:50", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[2].ID, ShowDate: day4, StartTime: "16:00", EndTime: "18:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// Black Death (102 min)
+		{MovieID: movies[3].ID, ScreenID: screens[2].ID, ShowDate: day0, StartTime: "14:00", EndTime: "15:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[3].ID, ScreenID: screens[2].ID, ShowDate: day0, StartTime: "19:30", EndTime: "21:12", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[3].ID, ScreenID: screens[2].ID, ShowDate: day2, StartTime: "17:00", EndTime: "18:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[3].ID, ScreenID: screens[2].ID, ShowDate: day3, StartTime: "14:00", EndTime: "15:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// Nick and Norah's Infinite Playlist (90 min)
+		{MovieID: movies[6].ID, ScreenID: screens[2].ID, ShowDate: day1, StartTime: "14:00", EndTime: "15:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[6].ID, ScreenID: screens[2].ID, ShowDate: day2, StartTime: "20:00", EndTime: "21:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[6].ID, ScreenID: screens[2].ID, ShowDate: day4, StartTime: "11:00", EndTime: "12:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[6].ID, ScreenID: screens[2].ID, ShowDate: day4, StartTime: "19:00", EndTime: "20:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
 
-		// Orlando -- AMC Disney Springs (screen 3): Tomorrow Never Dies, Brave Little Toaster, On the Line
-		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: today, StartTime: "11:00", EndTime: "12:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
-		{MovieID: movies[8].ID, ScreenID: screens[3].ID, ShowDate: today, StartTime: "14:00", EndTime: "15:14", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
-		{MovieID: movies[7].ID, ScreenID: screens[3].ID, ShowDate: tomorrow, StartTime: "10:00", EndTime: "11:43", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		// ===== Orlando -- AMC Disney Springs (screen 3, IMAX) =====
+		// Tomorrow Never Dies (119 min)
+		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: day0, StartTime: "11:00", EndTime: "12:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: day0, StartTime: "16:00", EndTime: "17:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: day0, StartTime: "20:00", EndTime: "21:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: day1, StartTime: "11:00", EndTime: "12:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: day2, StartTime: "14:00", EndTime: "15:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: day3, StartTime: "18:00", EndTime: "19:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		{MovieID: movies[2].ID, ScreenID: screens[3].ID, ShowDate: day4, StartTime: "11:00", EndTime: "12:59", Language: "English", Format: "IMAX", PriceMultiplier: 1.5, IsActive: true},
+		// Brave Little Toaster (74 min)
+		{MovieID: movies[8].ID, ScreenID: screens[3].ID, ShowDate: day0, StartTime: "14:00", EndTime: "15:14", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[3].ID, ShowDate: day1, StartTime: "14:00", EndTime: "15:14", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[3].ID, ShowDate: day2, StartTime: "10:00", EndTime: "11:14", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[3].ID, ShowDate: day3, StartTime: "10:00", EndTime: "11:14", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		// On the Line (103 min)
+		{MovieID: movies[7].ID, ScreenID: screens[3].ID, ShowDate: day1, StartTime: "10:00", EndTime: "11:43", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		{MovieID: movies[7].ID, ScreenID: screens[3].ID, ShowDate: day1, StartTime: "17:00", EndTime: "18:43", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		{MovieID: movies[7].ID, ScreenID: screens[3].ID, ShowDate: day2, StartTime: "19:00", EndTime: "20:43", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
+		{MovieID: movies[7].ID, ScreenID: screens[3].ID, ShowDate: day4, StartTime: "15:00", EndTime: "16:43", Language: "English", Format: "IMAX", PriceMultiplier: 1.2, IsActive: true},
 
-		// Orlando -- Regal Pointe (screen 4): The Karate Kid, Ghost in the Shell, The Other Side of the Door
-		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: today, StartTime: "12:00", EndTime: "14:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
-		{MovieID: movies[1].ID, ScreenID: screens[4].ID, ShowDate: today, StartTime: "16:00", EndTime: "17:47", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
-		{MovieID: movies[5].ID, ScreenID: screens[4].ID, ShowDate: tomorrow, StartTime: "19:00", EndTime: "20:36", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		// ===== Orlando -- Regal Pointe Orlando (screen 4, 4DX) =====
+		// The Karate Kid (140 min)
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day0, StartTime: "12:00", EndTime: "14:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day0, StartTime: "18:00", EndTime: "20:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day1, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day1, StartTime: "15:00", EndTime: "17:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day2, StartTime: "12:00", EndTime: "14:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day3, StartTime: "18:00", EndTime: "20:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day4, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[4].ID, ShowDate: day4, StartTime: "19:00", EndTime: "21:20", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		// Ghost in the Shell (107 min)
+		{MovieID: movies[1].ID, ScreenID: screens[4].ID, ShowDate: day0, StartTime: "15:00", EndTime: "16:47", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[4].ID, ShowDate: day1, StartTime: "13:00", EndTime: "14:47", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[4].ID, ShowDate: day2, StartTime: "17:00", EndTime: "18:47", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[4].ID, ShowDate: day3, StartTime: "11:00", EndTime: "12:47", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		// The Other Side of the Door (96 min)
+		{MovieID: movies[5].ID, ScreenID: screens[4].ID, ShowDate: day1, StartTime: "19:00", EndTime: "20:36", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[5].ID, ScreenID: screens[4].ID, ShowDate: day2, StartTime: "10:00", EndTime: "11:36", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[5].ID, ScreenID: screens[4].ID, ShowDate: day3, StartTime: "15:00", EndTime: "16:36", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
+		{MovieID: movies[5].ID, ScreenID: screens[4].ID, ShowDate: day4, StartTime: "14:00", EndTime: "15:36", Language: "English", Format: "4DX", PriceMultiplier: 1.8, IsActive: true},
 
-		// Tampa -- AMC West Shore (screen 5): Walk Hard, Nick and Norah's, On the Line, The Humbling
-		{MovieID: movies[4].ID, ScreenID: screens[5].ID, ShowDate: today, StartTime: "13:00", EndTime: "14:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[6].ID, ScreenID: screens[5].ID, ShowDate: today, StartTime: "17:00", EndTime: "18:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[7].ID, ScreenID: screens[5].ID, ShowDate: tomorrow, StartTime: "10:30", EndTime: "12:13", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[9].ID, ScreenID: screens[5].ID, ShowDate: tomorrow, StartTime: "14:00", EndTime: "15:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// ===== Tampa -- AMC West Shore (screen 5, Standard) =====
+		// Walk Hard (96 min)
+		{MovieID: movies[4].ID, ScreenID: screens[5].ID, ShowDate: day0, StartTime: "13:00", EndTime: "14:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[4].ID, ScreenID: screens[5].ID, ShowDate: day0, StartTime: "19:00", EndTime: "20:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[4].ID, ScreenID: screens[5].ID, ShowDate: day1, StartTime: "13:00", EndTime: "14:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[4].ID, ScreenID: screens[5].ID, ShowDate: day2, StartTime: "16:00", EndTime: "17:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[4].ID, ScreenID: screens[5].ID, ShowDate: day3, StartTime: "13:00", EndTime: "14:36", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// Nick and Norah's Infinite Playlist (90 min)
+		{MovieID: movies[6].ID, ScreenID: screens[5].ID, ShowDate: day0, StartTime: "17:00", EndTime: "18:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[6].ID, ScreenID: screens[5].ID, ShowDate: day1, StartTime: "10:00", EndTime: "11:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[6].ID, ScreenID: screens[5].ID, ShowDate: day1, StartTime: "17:00", EndTime: "18:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[6].ID, ScreenID: screens[5].ID, ShowDate: day2, StartTime: "20:00", EndTime: "21:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[6].ID, ScreenID: screens[5].ID, ShowDate: day4, StartTime: "11:00", EndTime: "12:30", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// On the Line (103 min)
+		{MovieID: movies[7].ID, ScreenID: screens[5].ID, ShowDate: day1, StartTime: "15:00", EndTime: "16:43", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[7].ID, ScreenID: screens[5].ID, ShowDate: day2, StartTime: "10:00", EndTime: "11:43", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[7].ID, ScreenID: screens[5].ID, ShowDate: day2, StartTime: "13:00", EndTime: "14:43", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[7].ID, ScreenID: screens[5].ID, ShowDate: day3, StartTime: "19:00", EndTime: "20:43", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// The Humbling (112 min)
+		{MovieID: movies[9].ID, ScreenID: screens[5].ID, ShowDate: day0, StartTime: "10:00", EndTime: "11:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[9].ID, ScreenID: screens[5].ID, ShowDate: day1, StartTime: "19:30", EndTime: "21:22", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[9].ID, ScreenID: screens[5].ID, ShowDate: day3, StartTime: "10:00", EndTime: "11:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[9].ID, ScreenID: screens[5].ID, ShowDate: day4, StartTime: "15:00", EndTime: "16:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[9].ID, ScreenID: screens[5].ID, ShowDate: day4, StartTime: "19:00", EndTime: "20:52", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
 
-		// Gainesville -- Regal Celebration Pointe (screen 6): Black Death, Brave Little Toaster, The Karate Kid, Ghost in the Shell
-		{MovieID: movies[3].ID, ScreenID: screens[6].ID, ShowDate: today, StartTime: "11:00", EndTime: "12:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[8].ID, ScreenID: screens[6].ID, ShowDate: today, StartTime: "14:00", EndTime: "15:14", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[0].ID, ScreenID: screens[6].ID, ShowDate: tomorrow, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
-		{MovieID: movies[1].ID, ScreenID: screens[6].ID, ShowDate: tomorrow, StartTime: "14:00", EndTime: "15:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// ===== Gainesville -- Regal Celebration Pointe (screen 6, Standard) =====
+		// Black Death (102 min)
+		{MovieID: movies[3].ID, ScreenID: screens[6].ID, ShowDate: day0, StartTime: "11:00", EndTime: "12:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[3].ID, ScreenID: screens[6].ID, ShowDate: day0, StartTime: "18:00", EndTime: "19:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[3].ID, ScreenID: screens[6].ID, ShowDate: day1, StartTime: "11:00", EndTime: "12:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[3].ID, ScreenID: screens[6].ID, ShowDate: day2, StartTime: "15:00", EndTime: "16:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[3].ID, ScreenID: screens[6].ID, ShowDate: day3, StartTime: "18:00", EndTime: "19:42", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// Brave Little Toaster (74 min)
+		{MovieID: movies[8].ID, ScreenID: screens[6].ID, ShowDate: day0, StartTime: "14:00", EndTime: "15:14", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[6].ID, ShowDate: day1, StartTime: "14:00", EndTime: "15:14", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[6].ID, ShowDate: day2, StartTime: "10:00", EndTime: "11:14", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[6].ID, ShowDate: day3, StartTime: "14:00", EndTime: "15:14", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[6].ID, ShowDate: day4, StartTime: "10:00", EndTime: "11:14", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[8].ID, ScreenID: screens[6].ID, ShowDate: day4, StartTime: "16:00", EndTime: "17:14", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// The Karate Kid (140 min)
+		{MovieID: movies[0].ID, ScreenID: screens[6].ID, ShowDate: day1, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[6].ID, ShowDate: day1, StartTime: "16:00", EndTime: "18:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[6].ID, ShowDate: day2, StartTime: "12:00", EndTime: "14:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[6].ID, ShowDate: day3, StartTime: "10:00", EndTime: "12:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[0].ID, ScreenID: screens[6].ID, ShowDate: day4, StartTime: "13:00", EndTime: "15:20", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		// Ghost in the Shell (107 min)
+		{MovieID: movies[1].ID, ScreenID: screens[6].ID, ShowDate: day2, StartTime: "18:00", EndTime: "19:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[6].ID, ShowDate: day3, StartTime: "20:00", EndTime: "21:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
+		{MovieID: movies[1].ID, ScreenID: screens[6].ID, ShowDate: day4, StartTime: "19:00", EndTime: "20:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
 	}
 	user := models.User{
 		Username: "Tester 1",
