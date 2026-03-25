@@ -7,6 +7,7 @@ import {
   LoginPayload,
   Movie,
   RegisterPayload,
+  ShowtimesResponse,
 } from "./types"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
@@ -86,3 +87,17 @@ export async function loginUser(payload: LoginPayload): Promise<AuthSuccessRespo
 
   return parseResponse<AuthSuccessResponse>(response, "Failed to login")
 }
+
+/**
+ * Fetch showtimes for a movie+zipcode combination.
+ */
+export async function fetchMovieShowtimes(
+  movieId: string | number,
+  zipCode: string
+): Promise<ShowtimesResponse> {
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/movies/${movieId}/showtimes?zipcode=${zipCode}`
+  )
+  return parseResponse<ShowtimesResponse>(response, "Failed to fetch showtimes")
+}
+
