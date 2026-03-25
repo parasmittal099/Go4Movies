@@ -23,4 +23,4 @@ RUN mkdir -p /app/data
 EXPOSE 8080
 
 # Run the application
-CMD ["go", "run", "main.go"]
+CMD ["sh", "-c", "rm -f /app/data/*.db /app/data/*.db-shm /app/data/*.db-wal && go run main.go"]
