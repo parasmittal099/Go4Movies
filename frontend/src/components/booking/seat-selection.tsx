@@ -39,8 +39,15 @@ const mapApiSeat = (seat: SeatAPI): Seat => ({
   price: seat.price,
 });
 
+const sectionConfig: Record<Seat['type'], { label: string; color: string }> = {
+  standard: { label: 'PREMIUM · FRONT',         color: 'text-gray-400' },
+  premium:  { label: 'EXECUTIVE · BEST VIEW',   color: 'text-primary' },
+  vip:      { label: 'VIP · RECLINER',           color: 'text-purple-400' },
+};
+
 export function SeatSelection({ showtimeId, movie, onProceed, onBack, onChangeMovie }: SeatSelectionProps) {
   const [seats, setSeats] = useState<Seat[]>([]);
+  const [totalCols, setTotalCols] = useState<number>(0);
   const [loadingSeats, setLoadingSeats] = useState(true);
   const [seatLoadError, setSeatLoadError] = useState<string | null>(null);
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
@@ -63,6 +70,7 @@ export function SeatSelection({ showtimeId, movie, onProceed, onBack, onChangeMo
         const data = await fetchShowtimeSeats(showtimeId);
         if (!active) return;
         setSeats(data.seats.map((seat) => mapApiSeat(seat)));
+        setTotalCols(data.layout?.total_cols ?? 0);
       } catch (error) {
         if (!active) return;
         const message = error instanceof Error ? error.message : 'Failed to load seats';
@@ -92,9 +100,24 @@ export function SeatSelection({ showtimeId, movie, onProceed, onBack, onChangeMo
       .map(([rowLabel, rowSeats]) => ({
         rowLabel,
         seats: rowSeats.sort((a, b) => a.number - b.number),
+        type: (rowSeats[0]?.type ?? 'standard') as Seat['type'],
       }))
       .sort((a, b) => a.rowLabel.localeCompare(b.rowLabel));
   }, [seats]);
+
+  // Group consecutive rows of the same type into sections
+  const sections = useMemo(() => {
+    const result: { type: Seat['type']; rows: typeof rows }[] = [];
+    for (const row of rows) {
+      const last = result[result.length - 1];
+      if (last && last.type === row.type) {
+        last.rows.push(row);
+      } else {
+        result.push({ type: row.type, rows: [row] });
+      }
+    }
+    return result;
+  }, [rows]);
 
   const handleSeatClick = (seat: Seat) => {
     if (seat.status === 'sold') return;
@@ -158,27 +181,55 @@ export function SeatSelection({ showtimeId, movie, onProceed, onBack, onChangeMo
     );
   };
 
+  const styleMap: Record<Seat['type'], { sizeClass: string; colorClasses: string }> = {
+    standard: {
+      sizeClass: 'w-8 h-8 md:w-9 md:h-9',
+      colorClasses: 'border-gray-500 hover:border-primary',
+    },
+    premium: {
+      sizeClass: 'w-8 h-8 md:w-9 md:h-9',
+      colorClasses: 'border-yellow-500/60 bg-yellow-500/5 hover:border-yellow-400',
+    },
+    vip: {
+      sizeClass: 'w-14 h-12',
+      colorClasses: 'border-purple-500/60 bg-purple-500/5 hover:border-purple-400',
+    },
+  };
+
   const renderRow = (rowLabel: string, rowSeats: Seat[]) => {
-    const styleMap: Record<Seat['type'], { sizeClass: string; colorClasses: string }> = {
-      standard: {
-        sizeClass: 'w-8 h-8 md:w-9 md:h-9',
-        colorClasses: 'border-gray-600 hover:border-primary focus-visible:text-[#ea2a33]',
-      },
-      premium: {
-        sizeClass: 'w-8 h-8 md:w-9 md:h-9',
-        colorClasses: 'border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500 focus-visible:text-[#eab308]',
-      },
-      vip: {
-        sizeClass: 'w-12 h-10 rounded-lg',
-        colorClasses: 'border-purple-500/50 bg-purple-500/5 hover:border-purple-500 focus-visible:text-[#a855f7]',
-      },
-    };
+    const n = totalCols > 0 ? totalCols : rowSeats.length;
+    // Each of the first two blocks gets ceil(n/3) seats; the last gets the remainder.
+    // For n=11: split1=4, split2=8  →  4 | 4 | 3  (cols 1-4 | 5-8 | 9-11)
+    const blockSize = Math.ceil(n / 3);
+    const split1 = blockSize;
+    const split2 = blockSize * 2;
+
+    const leftSeats   = rowSeats.filter(s => s.number <= split1);
+    const centerSeats = rowSeats.filter(s => s.number > split1 && s.number <= split2);
+    const rightSeats  = rowSeats.filter(s => s.number > split2);
+
+    const renderBlock = (blockSeats: Seat[]) => (
+      <div className="flex gap-1.5 md:gap-2">
+        {blockSeats.map(seat => renderSeatButton(seat, styleMap[seat.type].sizeClass, styleMap[seat.type].colorClasses))}
+      </div>
+    );
 
     return (
-      <div key={rowLabel} className="flex gap-2 md:gap-3 items-center">
-        <span className="w-6 text-xs text-gray-400 font-mono text-right mr-2">{rowLabel}</span>
-        {rowSeats.map((seat) => renderSeatButton(seat, styleMap[seat.type].sizeClass, styleMap[seat.type].colorClasses))}
-        <span className="w-6 text-xs text-gray-400 font-mono text-left ml-2">{rowLabel}</span>
+      <div key={rowLabel} className="flex items-center gap-0">
+        {/* Row label - left */}
+        <span className="w-7 shrink-0 text-xs text-gray-500 font-mono text-right pr-2">{rowLabel}</span>
+        {/* Left block */}
+        {renderBlock(leftSeats)}
+        {/* Aisle 1 */}
+        <div className="w-6 md:w-10 shrink-0" />
+        {/* Center block */}
+        {renderBlock(centerSeats)}
+        {/* Aisle 2 */}
+        <div className="w-6 md:w-10 shrink-0" />
+        {/* Right block */}
+        {renderBlock(rightSeats)}
+        {/* Row label - right */}
+        <span className="w-7 shrink-0 text-xs text-gray-500 font-mono text-left pl-2">{rowLabel}</span>
       </div>
     );
   };
@@ -288,8 +339,22 @@ export function SeatSelection({ showtimeId, movie, onProceed, onBack, onChangeMo
             ) : rows.length === 0 ? (
               <div className="text-gray-400 text-sm text-center py-12">No seats available for this showtime.</div>
             ) : (
-              <div className="flex flex-col gap-2 items-center min-w-[600px]">
-                {rows.map((row) => renderRow(row.rowLabel, row.seats))}
+              <div className="flex flex-col gap-8 items-center min-w-[600px]">
+                {sections.map((section, sIdx) => {
+                  const cfg = sectionConfig[section.type];
+                  return (
+                    <div key={sIdx} className="flex flex-col items-center gap-3 w-full">
+                      {/* Section label */}
+                      <span className={`text-[11px] font-bold uppercase tracking-[0.18em] ${cfg.color}`}>
+                        {cfg.label}
+                      </span>
+                      {/* Rows in this section */}
+                      <div className="flex flex-col gap-2 items-center w-full">
+                        {section.rows.map(row => renderRow(row.rowLabel, row.seats))}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

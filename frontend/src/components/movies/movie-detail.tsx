@@ -129,11 +129,13 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
               style={{ backgroundImage: `url(${movie.poster_url || "/dune-poster.jpg"})` }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-[#211111] via-transparent to-transparent opacity-60"></div>
+            {/* IMAX badge — not yet implemented (format not derived from API)
             <div className="absolute top-4 left-4">
               <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-lg bg-white/10 backdrop-blur-md text-white text-xs font-bold ring-1 ring-white/20">
                 IMAX
               </span>
             </div>
+            */}
           </div>
 
           {/* Info */}
@@ -141,6 +143,7 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
             <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-white leading-tight">
               {movie.title}
             </h1>
+            {/* Rating / duration / genre — not yet in API
             <div className="flex flex-wrap items-center gap-3 text-sm text-neutral-400">
               <span className="px-2 py-0.5 rounded-lg border border-neutral-700 text-neutral-300 text-xs font-medium">
                 PG-13
@@ -150,41 +153,31 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
               <span>•</span>
               <span>Sci-Fi, Adventure</span>
             </div>
+            */}
 
+            {/* Audience rating — not yet in API
             <div className="flex items-center gap-2">
               <span className="material-symbols-outlined text-yellow-500 text-xl font-bold">star</span>
               <span className="text-white font-bold text-lg">8.9</span>
               <span className="text-neutral-500 text-sm">/ 10 (45k votes)</span>
             </div>
+            */}
 
             <p className="text-neutral-300 text-sm leading-relaxed max-h-40 overflow-y-auto pr-2">
               {movie.description || "Paul Atreides unites with Chani and the Fremen while on a warpath of revenge against the conspirators who destroyed his family."}
             </p>
 
-            {/* Cast - using downloaded images */}
+            {/* Cast — not yet in API (hardcoded placeholder removed)
             <div className="pt-2">
               <h4 className="text-xs font-bold text-neutral-500 uppercase tracking-wider mb-3">Cast</h4>
               <div className="flex -space-x-3 overflow-hidden p-1 pl-0">
-                <img
-                  src="/cast1.jpg"
-                  alt="Timothée Chalamet"
-                  className="inline-block w-10 h-10 rounded-full ring-2 ring-[#211111] object-cover"
-                />
-                <img
-                  src="/cast2.jpg"
-                  alt="Zendaya"
-                  className="inline-block w-10 h-10 rounded-full ring-2 ring-[#211111] object-cover"
-                />
-                <img
-                  src="/cast3.jpg"
-                  alt="Rebecca Ferguson"
-                  className="inline-block w-10 h-10 rounded-full ring-2 ring-[#211111] object-cover"
-                />
-                <div className="inline-flex w-10 h-10 rounded-full ring-2 ring-[#211111] bg-surface-dark items-center justify-center text-xs font-medium text-white ring-offset-2 ring-offset-[#211111]">
-                  +8
-                </div>
+                <img src="/cast1.jpg" alt="Timothée Chalamet" className="inline-block w-10 h-10 rounded-full ring-2 ring-[#211111] object-cover" />
+                <img src="/cast2.jpg" alt="Zendaya" className="inline-block w-10 h-10 rounded-full ring-2 ring-[#211111] object-cover" />
+                <img src="/cast3.jpg" alt="Rebecca Ferguson" className="inline-block w-10 h-10 rounded-full ring-2 ring-[#211111] object-cover" />
+                <div className="inline-flex w-10 h-10 rounded-full ring-2 ring-[#211111] bg-surface-dark items-center justify-center text-xs font-medium text-white ring-offset-2 ring-offset-[#211111]">+8</div>
               </div>
             </div>
+            */}
           </div>
         </div>
       </aside>
@@ -195,6 +188,7 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
         <div className="w-full">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-white">Select Date</h3>
+            {/* Date nav chevrons — pagination not yet implemented
             <div className="flex gap-2">
               <button className="w-8 h-8 rounded-full bg-surface-dark hover:bg-neutral-800 flex items-center justify-center text-neutral-400 hover:text-white transition-colors">
                 <span className="material-symbols-outlined text-sm">chevron_left</span>
@@ -203,6 +197,7 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
                 <span className="material-symbols-outlined text-sm">chevron_right</span>
               </button>
             </div>
+            */}
           </div>
           <div className="flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
             {sortedDates.map((date) => {
@@ -236,7 +231,7 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
           </div>
         </div>
 
-        {/* Filters */}
+        {/* Filters — not yet implemented (All Formats, Language, Price Range)
         <div className="flex flex-wrap items-center gap-3 border-b border-neutral-800 pb-6">
           <button className="flex items-center gap-2 px-4 py-2 bg-neutral-800 rounded-lg text-sm font-medium text-white hover:bg-neutral-700 transition-colors">
             <span>All Formats</span>
@@ -254,6 +249,7 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
             Showing <span className="text-white font-bold">{cinemas.length}</span> theaters nearby
           </div>
         </div>
+        */}
 
         {/* Theaters List */}
         <div className="flex flex-col gap-6">
@@ -383,26 +379,17 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
                 <p className="text-xs text-neutral-400 uppercase tracking-wide mb-1">Location</p>
                 <p className="text-white font-medium">{selectedTiming.cinemaName}</p>
               </div>
-              {/* Group booking avatars layout (dummy) */}
+              {/* Group booking ("Going with") — not yet implemented
               <div className="h-10 w-px bg-neutral-800 hidden lg:block"></div>
               <div className="hidden lg:flex items-center gap-2">
                 <p className="text-xs text-neutral-400 uppercase tracking-wide mr-2">Going with</p>
                 <div className="flex -space-x-3">
-                  <img
-                    src="/cast1.jpg"
-                    alt="Friend 1"
-                    className="w-8 h-8 rounded-full ring-2 ring-neutral-900 object-cover"
-                  />
-                  <img
-                    src="/cast2.jpg"
-                    alt="Friend 2"
-                    className="w-8 h-8 rounded-full ring-2 ring-neutral-900 object-cover"
-                  />
-                  <div className="w-8 h-8 rounded-full ring-2 ring-neutral-900 bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-white">
-                    +2
-                  </div>
+                  <img src="/cast1.jpg" alt="Friend 1" className="w-8 h-8 rounded-full ring-2 ring-neutral-900 object-cover" />
+                  <img src="/cast2.jpg" alt="Friend 2" className="w-8 h-8 rounded-full ring-2 ring-neutral-900 object-cover" />
+                  <div className="w-8 h-8 rounded-full ring-2 ring-neutral-900 bg-neutral-800 flex items-center justify-center text-[10px] font-bold text-white">+2</div>
                 </div>
               </div>
+              */}
             </div>
 
             <div className="flex w-full sm:w-auto gap-4 items-center">
