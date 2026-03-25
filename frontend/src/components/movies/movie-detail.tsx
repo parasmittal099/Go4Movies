@@ -48,12 +48,16 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
   const [selectedDate, setSelectedDate] = useState<string>("")
   const [selectedTiming, setSelectedTiming] = useState<SelectedTiming | null>(null)
 
+  const sortedDates = useMemo(() => {
+    return [...(showtimes?.dates ?? [])].sort((a, b) => a.localeCompare(b))
+  }, [showtimes?.dates])
+
   // Set initial selected date once showtimes arrive
   useEffect(() => {
-    if (showtimes?.dates?.length && !selectedDate) {
-      setSelectedDate(showtimes.dates[0])
+    if (sortedDates.length && !selectedDate) {
+      setSelectedDate(sortedDates[0])
     }
-  }, [showtimes, selectedDate])
+  }, [sortedDates, selectedDate])
 
   // Map API theaters → Cinema objects for the selected date
   const cinemas = useMemo<Cinema[]>(() => {
@@ -201,7 +205,7 @@ export function MovieDetail({ movie, showtimes, showtimesLoading, onBookTickets 
             </div>
           </div>
           <div className="flex gap-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] pb-2">
-            {(showtimes?.dates ?? []).map((date) => {
+            {sortedDates.map((date) => {
               const { dayStr, monthStr } = parseDate(date)
               const isActive = selectedDate === date
               const today = new Date().toISOString().split("T")[0]

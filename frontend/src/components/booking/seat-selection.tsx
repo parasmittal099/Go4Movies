@@ -1,65 +1,100 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
+import { fetchShowtimeSeats } from '@/lib/api';
+import { SeatAPI } from '@/lib/types';
 
 export interface Seat {
   id: string; // e.g. "B5"
+  dbId: number;
   row: string;
   number: number;
   type: 'standard' | 'premium' | 'vip';
-  status: 'available' | 'sold' | 'selected';
+  status: 'available' | 'sold';
   price: number; 
 }
 
 export interface SeatSelectionProps {
+  showtimeId: number;
   movie: { title: string; time: string; format: string; hall: string };
   onProceed: (seats: Seat[]) => void;
   onBack: () => void;
   onChangeMovie: () => void;
 }
 
-// Helper to generate a row of seats
-const generateRow = (
-  rowLetter: string,
-  sections: number[], // e.g. [4, 4, 3] for 4 left, 4 center, 3 right
-  soldIndices: number[], // 0-indexed across the row
-  price: number,
-  type: 'premium' | 'vip'
-): Seat[] => {
-  const seats: Seat[] = [];
-  let currentNumber = 1;
-  
-  for (const count of sections) {
-    for (let i = 0; i < count; i++) {
-      const isSold = soldIndices.includes(currentNumber - 1);
-      seats.push({
-        id: `${rowLetter}${currentNumber}`,
-        row: rowLetter,
-        number: currentNumber,
-        type,
-        status: isSold ? 'sold' : 'available',
-        price,
-      });
-      currentNumber++;
-    }
-  }
-  return seats;
+const seatTypeMap = (seatType: string): 'standard' | 'premium' | 'vip' => {
+  const normalized = seatType.toLowerCase();
+  if (normalized.includes('vip')) return 'vip';
+  if (normalized.includes('premium')) return 'premium';
+  return 'standard';
 };
 
-const initialSeats: Seat[] = [
-  ...generateRow('A', [4, 4, 3], [2, 3, 8, 9], 18, 'premium'),
-  ...generateRow('B', [4, 4, 3], [], 18, 'premium'),
-  ...generateRow('C', [4, 4, 3], [3, 10], 18, 'premium'),
-  ...generateRow('D', [4, 4, 3], [], 18, 'premium'),
-  ...generateRow('E', [2, 3, 2], [], 25, 'vip'),
-];
+const mapApiSeat = (seat: SeatAPI): Seat => ({
+  id: `${seat.row_label}${seat.col_number}`,
+  dbId: seat.id,
+  row: seat.row_label,
+  number: seat.col_number,
+  type: seatTypeMap(seat.seat_type),
+  status: seat.status === 'AVAILABLE' ? 'available' : 'sold',
+  price: seat.price,
+});
 
-export function SeatSelection({ movie, onProceed, onBack, onChangeMovie }: SeatSelectionProps) {
+export function SeatSelection({ showtimeId, movie, onProceed, onBack, onChangeMovie }: SeatSelectionProps) {
+  const [seats, setSeats] = useState<Seat[]>([]);
+  const [loadingSeats, setLoadingSeats] = useState(true);
+  const [seatLoadError, setSeatLoadError] = useState<string | null>(null);
   const [selectedSeatIds, setSelectedSeatIds] = useState<string[]>([]);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  const selectedSeats = initialSeats.filter(s => selectedSeatIds.includes(s.id));
+  useEffect(() => {
+    let active = true;
+
+    const loadSeats = async () => {
+      if (!showtimeId) {
+        setSeatLoadError('Invalid showtime selected. Please go back and pick a showtime.');
+        setLoadingSeats(false);
+        return;
+      }
+
+      setLoadingSeats(true);
+      setSeatLoadError(null);
+
+      try {
+        const data = await fetchShowtimeSeats(showtimeId);
+        if (!active) return;
+        setSeats(data.seats.map((seat) => mapApiSeat(seat)));
+      } catch (error) {
+        if (!active) return;
+        const message = error instanceof Error ? error.message : 'Failed to load seats';
+        setSeatLoadError(message);
+      } finally {
+        if (active) setLoadingSeats(false);
+      }
+    };
+
+    loadSeats();
+
+    return () => {
+      active = false;
+    };
+  }, [showtimeId]);
+
+  const selectedSeats = seats.filter(s => selectedSeatIds.includes(s.id));
   const totalPrice = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+
+  const rows = useMemo(() => {
+    const grouped = new Map<string, Seat[]>();
+    for (const seat of seats) {
+      if (!grouped.has(seat.row)) grouped.set(seat.row, []);
+      grouped.get(seat.row)!.push(seat);
+    }
+    return Array.from(grouped.entries())
+      .map(([rowLabel, rowSeats]) => ({
+        rowLabel,
+        seats: rowSeats.sort((a, b) => a.number - b.number),
+      }))
+      .sort((a, b) => a.rowLabel.localeCompare(b.rowLabel));
+  }, [seats]);
 
   const handleSeatClick = (seat: Seat) => {
     if (seat.status === 'sold') return;
@@ -123,26 +158,27 @@ export function SeatSelection({ movie, onProceed, onBack, onChangeMovie }: SeatS
     );
   };
 
-  const renderRow = (rowLetter: string, sections: number[], sizeClass: string, colorClasses: string) => {
-    const rowSeats = initialSeats.filter(s => s.row === rowLetter);
-    const elements: React.ReactNode[] = [];
-    let seatIdx = 0;
-    
-    sections.forEach((count, sIdx) => {
-      for (let i = 0; i < count; i++) {
-        elements.push(renderSeatButton(rowSeats[seatIdx], sizeClass, colorClasses));
-        seatIdx++;
-      }
-      if (sIdx < sections.length - 1) {
-        elements.push(<div key={`aisle-${sIdx}`} className="w-8"></div>);
-      }
-    });
+  const renderRow = (rowLabel: string, rowSeats: Seat[]) => {
+    const styleMap: Record<Seat['type'], { sizeClass: string; colorClasses: string }> = {
+      standard: {
+        sizeClass: 'w-8 h-8 md:w-9 md:h-9',
+        colorClasses: 'border-gray-600 hover:border-primary focus-visible:text-[#ea2a33]',
+      },
+      premium: {
+        sizeClass: 'w-8 h-8 md:w-9 md:h-9',
+        colorClasses: 'border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500 focus-visible:text-[#eab308]',
+      },
+      vip: {
+        sizeClass: 'w-12 h-10 rounded-lg',
+        colorClasses: 'border-purple-500/50 bg-purple-500/5 hover:border-purple-500 focus-visible:text-[#a855f7]',
+      },
+    };
 
     return (
-      <div key={rowLetter} className="flex gap-2 md:gap-3 items-center">
-        <span className="w-6 text-xs text-gray-400 font-mono text-right mr-2">{rowLetter}</span>
-        {elements}
-        <span className="w-6 text-xs text-gray-400 font-mono text-left ml-2">{rowLetter}</span>
+      <div key={rowLabel} className="flex gap-2 md:gap-3 items-center">
+        <span className="w-6 text-xs text-gray-400 font-mono text-right mr-2">{rowLabel}</span>
+        {rowSeats.map((seat) => renderSeatButton(seat, styleMap[seat.type].sizeClass, styleMap[seat.type].colorClasses))}
+        <span className="w-6 text-xs text-gray-400 font-mono text-left ml-2">{rowLabel}</span>
       </div>
     );
   };
@@ -244,25 +280,18 @@ export function SeatSelection({ movie, onProceed, onBack, onChangeMovie }: SeatS
             <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-1/2 h-20 bg-primary/20 blur-[60px] rounded-full pointer-events-none"></div>
           </div>
 
-          <div className="flex flex-col gap-10 w-full overflow-x-auto pb-10 px-4" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
-            
-            <div className="flex flex-col gap-2 items-center min-w-[600px]">
-              <h3 className="text-xs font-bold tracking-widest text-gray-600 uppercase mb-2">Premium - Front</h3>
-              {renderRow('A', [4, 4, 3], 'w-8 h-8 md:w-9 md:h-9', 'border-gray-600 hover:border-primary focus-visible:text-[#ea2a33]')}
-              {renderRow('B', [4, 4, 3], 'w-8 h-8 md:w-9 md:h-9', 'border-gray-600 hover:border-primary focus-visible:text-[#ea2a33]')}
-            </div>
-
-            <div className="flex flex-col gap-2 items-center min-w-[600px]">
-              <h3 className="text-xs font-bold tracking-widest text-[#ea2a33] uppercase mt-4 mb-2">Executive - Best View</h3>
-              {renderRow('C', [4, 4, 3], 'w-8 h-8 md:w-9 md:h-9', 'border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500 focus-visible:text-[#eab308]')}
-              {renderRow('D', [4, 4, 3], 'w-8 h-8 md:w-9 md:h-9', 'border-yellow-500/50 bg-yellow-500/5 hover:border-yellow-500 focus-visible:text-[#eab308]')}
-            </div>
-
-            <div className="flex flex-col gap-2 items-center min-w-[600px]">
-              <h3 className="text-xs font-bold tracking-widest text-purple-400 uppercase mt-4 mb-2">VIP - Recliner</h3>
-              {renderRow('E', [2, 3, 2], 'w-12 h-10 rounded-lg', 'border-purple-500/50 bg-purple-500/5 hover:border-purple-500 focus-visible:text-[#a855f7]')}
-            </div>
-
+          <div className="flex flex-col gap-4 w-full overflow-x-auto pb-10 px-4" style={{ msOverflowStyle: 'none', scrollbarWidth: 'none' }}>
+            {loadingSeats ? (
+              <div className="text-gray-400 text-sm text-center py-12">Loading seats...</div>
+            ) : seatLoadError ? (
+              <div className="text-red-400 text-sm text-center py-12">{seatLoadError}</div>
+            ) : rows.length === 0 ? (
+              <div className="text-gray-400 text-sm text-center py-12">No seats available for this showtime.</div>
+            ) : (
+              <div className="flex flex-col gap-2 items-center min-w-[600px]">
+                {rows.map((row) => renderRow(row.rowLabel, row.seats))}
+              </div>
+            )}
           </div>
         </div>
       </main>

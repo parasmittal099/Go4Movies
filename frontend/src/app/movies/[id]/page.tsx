@@ -66,6 +66,7 @@ export default function MoviePage() {
 
     return (
       <SeatSelection
+        showtimeId={selectedShowtime?.id ?? selectedShowtimeId ?? 0}
         movie={{
           title: movie.title,
           time: selectedShowtime ? `${selectedShowtime.show_date}, ${selectedShowtime.start_time}` : "",
