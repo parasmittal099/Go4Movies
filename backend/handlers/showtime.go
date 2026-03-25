@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"math"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -141,5 +142,132 @@ func GetMovieShowtimes(c *gin.Context) {
 		"title":    movie.Title,
 		"dates":    dates,
 		"theaters": theaters,
+	})
+}
+
+// ---------- Seat availability for a showtime ----------
+
+type seatResponse struct {
+	ID        uint    `json:"id"`
+	RowLabel  string  `json:"row_label"`
+	ColNumber int     `json:"col_number"`
+	SeatType  string  `json:"seat_type"`
+	Price     float64 `json:"price"`
+	Status    string  `json:"status"` // AVAILABLE | RESERVED | BOOKED
+}
+
+type seatSummary struct {
+	Total     int `json:"total"`
+	Available int `json:"available"`
+	Reserved  int `json:"reserved"`
+	Booked    int `json:"booked"`
+}
+
+// GET /api/v1/seats?showtime_id=&seat_type=&status=
+func GetShowtimeSeats(c *gin.Context) {
+	showtimeID := c.Query("showtime_id")
+	if showtimeID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "showtime_id query parameter is required"})
+		return
+	}
+
+	var showtime models.Showtime
+	err := database.DB.
+		Preload("Screen.Theater").
+		Preload("Movie").
+		First(&showtime, showtimeID).Error
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Showtime not found"})
+		return
+	}
+
+	var seats []models.Seat
+	seatQuery := database.DB.Where("screen_id = ?", showtime.ScreenID).Order("row_label, col_number")
+	if seatType := c.Query("seat_type"); seatType != "" {
+		seatQuery = seatQuery.Where("seat_type = ?", seatType)
+	}
+	if err := seatQuery.Find(&seats).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch seats"})
+		return
+	}
+
+	// Booked / reserved seats for this showtime
+	type bsRow struct {
+		SeatID        uint
+		BookingStatus string
+	}
+	var bsRows []bsRow
+	database.DB.Table("booking_seats").
+		Select("booking_seats.seat_id, bookings.status AS booking_status").
+		Joins("JOIN bookings ON bookings.id = booking_seats.booking_id").
+		Where("booking_seats.showtime_id = ? AND bookings.status IN ?",
+			showtime.ID, []string{"PENDING", "CONFIRMED"},
+		).
+		Scan(&bsRows)
+
+	statusMap := make(map[uint]string, len(bsRows))
+	for _, r := range bsRows {
+		switch r.BookingStatus {
+		case "CONFIRMED":
+			statusMap[r.SeatID] = "BOOKED"
+		case "PENDING":
+			if statusMap[r.SeatID] != "BOOKED" {
+				statusMap[r.SeatID] = "RESERVED"
+			}
+		}
+	}
+
+	filterStatus := c.Query("status")
+	result := make([]seatResponse, 0, len(seats))
+	summary := seatSummary{Total: len(seats)}
+
+	for _, seat := range seats {
+		status := "AVAILABLE"
+		if s, ok := statusMap[seat.ID]; ok {
+			status = s
+		}
+
+		switch status {
+		case "AVAILABLE":
+			summary.Available++
+		case "RESERVED":
+			summary.Reserved++
+		case "BOOKED":
+			summary.Booked++
+		}
+
+		if filterStatus != "" && status != filterStatus {
+			continue
+		}
+
+		price := math.Round(seat.BasePrice*showtime.PriceMultiplier*100) / 100
+		result = append(result, seatResponse{
+			ID:        seat.ID,
+			RowLabel:  seat.RowLabel,
+			ColNumber: seat.ColNumber,
+			SeatType:  seat.SeatType,
+			Price:     price,
+			Status:    status,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"showtime": gin.H{
+			"id":           showtime.ID,
+			"movie_title":  showtime.Movie.Title,
+			"screen_name":  showtime.Screen.Name,
+			"screen_type":  showtime.Screen.ScreenType,
+			"theater_name": showtime.Screen.Theater.Name,
+			"show_date":    showtime.ShowDate,
+			"start_time":   showtime.StartTime,
+			"format":       showtime.Format,
+			"language":     showtime.Language,
+		},
+		"layout": gin.H{
+			"total_rows": showtime.Screen.TotalRows,
+			"total_cols": showtime.Screen.TotalCols,
+		},
+		"seats":   result,
+		"summary": summary,
 	})
 }

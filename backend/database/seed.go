@@ -1,6 +1,7 @@
 package database
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -56,19 +57,57 @@ func Seed() {
 	log.Printf("Seeded %d theaters", len(theaters))
 
 	// -------------------------------------------------------
-	// 3. SCREENS (1 per theater for sample data)
+	// 3. SCREENS (1 per theater — all share the same 5-row
+	//    layout that the frontend renders)
 	// -------------------------------------------------------
 	screens := []models.Screen{
-		{TheaterID: theaters[0].ID, Name: "Screen 1", TotalRows: 10, TotalCols: 15, ScreenType: "IMAX"},
-		{TheaterID: theaters[1].ID, Name: "Screen 1", TotalRows: 8, TotalCols: 12, ScreenType: "Standard"},
-		{TheaterID: theaters[2].ID, Name: "Screen 1", TotalRows: 10, TotalCols: 14, ScreenType: "Standard"},
-		{TheaterID: theaters[3].ID, Name: "Screen 1", TotalRows: 12, TotalCols: 18, ScreenType: "IMAX"},
-		{TheaterID: theaters[4].ID, Name: "Screen 1", TotalRows: 10, TotalCols: 15, ScreenType: "4DX"},
-		{TheaterID: theaters[5].ID, Name: "Screen 1", TotalRows: 9, TotalCols: 14, ScreenType: "Standard"},
-		{TheaterID: theaters[6].ID, Name: "Screen 1", TotalRows: 10, TotalCols: 15, ScreenType: "Standard"},
+		{TheaterID: theaters[0].ID, Name: "Screen 1", TotalRows: 5, TotalCols: 11, ScreenType: "IMAX"},
+		{TheaterID: theaters[1].ID, Name: "Screen 1", TotalRows: 5, TotalCols: 11, ScreenType: "Standard"},
+		{TheaterID: theaters[2].ID, Name: "Screen 1", TotalRows: 5, TotalCols: 11, ScreenType: "Standard"},
+		{TheaterID: theaters[3].ID, Name: "Screen 1", TotalRows: 5, TotalCols: 11, ScreenType: "IMAX"},
+		{TheaterID: theaters[4].ID, Name: "Screen 1", TotalRows: 5, TotalCols: 11, ScreenType: "4DX"},
+		{TheaterID: theaters[5].ID, Name: "Screen 1", TotalRows: 5, TotalCols: 11, ScreenType: "Standard"},
+		{TheaterID: theaters[6].ID, Name: "Screen 1", TotalRows: 5, TotalCols: 11, ScreenType: "Standard"},
 	}
 	DB.Create(&screens)
 	log.Printf("Seeded %d screens", len(screens))
+
+	// -------------------------------------------------------
+	// 3b. SEATS (matching the frontend layout exactly)
+	//     Rows A–B: Premium  (11 seats, $18)
+	//     Rows C–D: Premium  (11 seats, $18) — "Executive" in UI
+	//     Row  E:   VIP      ( 7 seats, $25) — recliners
+	//     Total: 51 seats per screen
+	// -------------------------------------------------------
+	type seatDef struct {
+		Row   string
+		Count int
+		Type  string
+		Price float64
+	}
+	seatLayout := []seatDef{
+		{"A", 11, "Premium", 18.0},
+		{"B", 11, "Premium", 18.0},
+		{"C", 11, "Premium", 18.0},
+		{"D", 11, "Premium", 18.0},
+		{"E", 7, "VIP", 25.0},
+	}
+	for _, screen := range screens {
+		var seats []models.Seat
+		for _, def := range seatLayout {
+			for col := 1; col <= def.Count; col++ {
+				seats = append(seats, models.Seat{
+					ScreenID:  screen.ID,
+					RowLabel:  def.Row,
+					ColNumber: col,
+					SeatType:  def.Type,
+					BasePrice: def.Price,
+				})
+			}
+		}
+		DB.Create(&seats)
+	}
+	log.Printf("Seeded 51 seats per screen (%d screens)", len(screens))
 
 	// -------------------------------------------------------
 	// 4. MOVIES (poster URLs sourced from TMDB via jsonfakery)
@@ -383,6 +422,71 @@ func Seed() {
 	DB.Create(&user)
 	DB.Create(&showtimes)
 	log.Printf("Seeded %d showtimes", len(showtimes))
+
+	// -------------------------------------------------------
+	// 7. SAMPLE BOOKINGS (mark a few seats as sold so the
+	//    seat map isn't empty on first load)
+	// -------------------------------------------------------
+	type soldSeat struct {
+		Row string
+		Col int
+	}
+	sampleBookings := []struct {
+		ShowtimeIdx int
+		Seats       []soldSeat
+		Status      string
+	}{
+		{0, []soldSeat{{"A", 3}, {"A", 4}, {"A", 9}, {"A", 10}}, "CONFIRMED"},
+		{0, []soldSeat{{"C", 4}, {"C", 11}}, "CONFIRMED"},
+		{1, []soldSeat{{"B", 2}, {"B", 3}, {"B", 4}}, "CONFIRMED"},
+		{1, []soldSeat{{"D", 7}, {"D", 8}}, "CONFIRMED"},
+		{3, []soldSeat{{"A", 1}, {"A", 2}, {"C", 6}, {"C", 7}}, "CONFIRMED"},
+		{4, []soldSeat{{"E", 3}, {"E", 4}, {"E", 5}}, "CONFIRMED"},
+		{6, []soldSeat{{"A", 5}, {"A", 6}, {"B", 5}, {"B", 6}}, "CONFIRMED"},
+		{9, []soldSeat{{"D", 1}, {"D", 2}, {"D", 3}}, "CONFIRMED"},
+	}
+
+	for i, sb := range sampleBookings {
+		st := showtimes[sb.ShowtimeIdx]
+
+		var seatRecords []models.Seat
+		for _, s := range sb.Seats {
+			var seat models.Seat
+			if err := DB.Where("screen_id = ? AND row_label = ? AND col_number = ?",
+				st.ScreenID, s.Row, s.Col).First(&seat).Error; err == nil {
+				seatRecords = append(seatRecords, seat)
+			}
+		}
+		if len(seatRecords) == 0 {
+			continue
+		}
+
+		var total float64
+		for _, seat := range seatRecords {
+			total += seat.BasePrice * st.PriceMultiplier
+		}
+
+		booking := models.Booking{
+			UserID:      user.ID,
+			ShowtimeID:  st.ID,
+			BookingRef:  fmt.Sprintf("SEED-%04d", i+1),
+			Status:      sb.Status,
+			TotalAmount: total,
+			PaymentStatus: "PAID",
+			BookedAt:    time.Now(),
+		}
+		DB.Create(&booking)
+
+		for _, seat := range seatRecords {
+			DB.Create(&models.BookingSeat{
+				BookingID:  booking.ID,
+				SeatID:     seat.ID,
+				ShowtimeID: st.ID,
+				SeatPrice:  seat.BasePrice * st.PriceMultiplier,
+			})
+		}
+	}
+	log.Println("Seeded sample bookings with sold seats")
 
 	log.Println("Database seeding completed successfully")
 }
