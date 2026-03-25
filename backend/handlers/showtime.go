@@ -9,25 +9,6 @@ import (
 	"github.com/parasmittal099/backend-project/models"
 )
 
-type showtimeEntry struct {
-	ID              uint    `json:"id"`
-	ShowDate        string  `json:"show_date"`
-	StartTime       string  `json:"start_time"`
-	EndTime         string  `json:"end_time"`
-	Language        string  `json:"language"`
-	Format          string  `json:"format"`
-	PriceMultiplier float64 `json:"price_multiplier"`
-	ScreenName      string  `json:"screen_name"`
-	ScreenType      string  `json:"screen_type"`
-}
-
-type theaterGroup struct {
-	TheaterID  uint            `json:"theater_id"`
-	Name       string          `json:"name"`
-	Address    *string         `json:"address,omitempty"`
-	Showtimes  []showtimeEntry `json:"showtimes"`
-}
-
 // GET /api/v1/movies/:id/showtimes?zipcode=33101
 func GetMovieShowtimes(c *gin.Context) {
 	movieID := c.Param("id")
@@ -49,7 +30,7 @@ func GetMovieShowtimes(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"movie_id": movie.ID,
 			"dates":    []string{},
-			"theaters": []theaterGroup{},
+			"theaters": []models.TheaterGroup{},
 		})
 		return
 	}
@@ -97,7 +78,7 @@ func GetMovieShowtimes(c *gin.Context) {
 	}
 
 	dateSet := map[string]bool{}
-	theaterMap := map[uint]*theaterGroup{}
+	theaterMap := map[uint]*models.TheaterGroup{}
 	theaterOrder := []uint{}
 
 	for _, r := range rows {
@@ -105,7 +86,7 @@ func GetMovieShowtimes(c *gin.Context) {
 
 		tg, exists := theaterMap[r.TheaterID]
 		if !exists {
-			tg = &theaterGroup{
+			tg = &models.TheaterGroup{
 				TheaterID: r.TheaterID,
 				Name:      r.TheaterName,
 				Address:   r.TheaterAddress,
@@ -114,7 +95,7 @@ func GetMovieShowtimes(c *gin.Context) {
 			theaterOrder = append(theaterOrder, r.TheaterID)
 		}
 
-		tg.Showtimes = append(tg.Showtimes, showtimeEntry{
+		tg.Showtimes = append(tg.Showtimes, models.ShowtimeEntry{
 			ID:              r.ShowtimeID,
 			ShowDate:        r.ShowDate,
 			StartTime:       r.StartTime,
@@ -132,7 +113,7 @@ func GetMovieShowtimes(c *gin.Context) {
 		dates = append(dates, d)
 	}
 
-	theaters := make([]theaterGroup, 0, len(theaterOrder))
+	theaters := make([]models.TheaterGroup, 0, len(theaterOrder))
 	for _, tid := range theaterOrder {
 		theaters = append(theaters, *theaterMap[tid])
 	}
@@ -143,24 +124,6 @@ func GetMovieShowtimes(c *gin.Context) {
 		"dates":    dates,
 		"theaters": theaters,
 	})
-}
-
-// ---------- Seat availability for a showtime ----------
-
-type seatResponse struct {
-	ID        uint    `json:"id"`
-	RowLabel  string  `json:"row_label"`
-	ColNumber int     `json:"col_number"`
-	SeatType  string  `json:"seat_type"`
-	Price     float64 `json:"price"`
-	Status    string  `json:"status"` // AVAILABLE | RESERVED | BOOKED
-}
-
-type seatSummary struct {
-	Total     int `json:"total"`
-	Available int `json:"available"`
-	Reserved  int `json:"reserved"`
-	Booked    int `json:"booked"`
 }
 
 // GET /api/v1/seats?showtime_id=&seat_type=&status=
@@ -218,8 +181,8 @@ func GetShowtimeSeats(c *gin.Context) {
 	}
 
 	filterStatus := c.Query("status")
-	result := make([]seatResponse, 0, len(seats))
-	summary := seatSummary{Total: len(seats)}
+	result := make([]models.SeatResponse, 0, len(seats))
+	summary := models.SeatSummary{Total: len(seats)}
 
 	for _, seat := range seats {
 		status := "AVAILABLE"
@@ -241,7 +204,7 @@ func GetShowtimeSeats(c *gin.Context) {
 		}
 
 		price := math.Round(seat.BasePrice*showtime.PriceMultiplier*100) / 100
-		result = append(result, seatResponse{
+		result = append(result, models.SeatResponse{
 			ID:        seat.ID,
 			RowLabel:  seat.RowLabel,
 			ColNumber: seat.ColNumber,
