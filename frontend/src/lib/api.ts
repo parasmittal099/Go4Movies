@@ -7,6 +7,7 @@ import {
   LoginPayload,
   Movie,
   RegisterPayload,
+  SeatsResponse,
   ShowtimesResponse,
 } from "./types"
 
@@ -99,5 +100,10 @@ export async function fetchMovieShowtimes(
     `${API_BASE_URL}/api/v1/movies/${movieId}/showtimes?zipcode=${zipCode}`
   )
   return parseResponse<ShowtimesResponse>(response, "Failed to fetch showtimes")
+}
+
+export async function fetchShowtimeSeats(showtimeId: number): Promise<SeatsResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/seats?showtime_id=${showtimeId}`)
+  return parseResponse<SeatsResponse>(response, "Failed to fetch seats")
 }
 

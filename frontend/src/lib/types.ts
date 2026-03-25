@@ -68,3 +68,37 @@ export interface ShowtimesResponse {
   theaters: TheaterGroup[]
 }
 
+export interface SeatAPI {
+  id: number
+  row_label: string
+  col_number: number
+  seat_type: string
+  price: number
+  status: "AVAILABLE" | "RESERVED" | "BOOKED"
+}
+
+export interface SeatsResponse {
+  showtime: {
+    id: number
+    movie_title: string
+    screen_name: string
+    screen_type: string
+    theater_name: string
+    show_date: string
+    start_time: string
+    format: string
+    language: string
+  }
+  layout: {
+    total_rows: number
+    total_cols: number
+  }
+  summary: {
+    total: number
+    available: number
+    reserved: number
+    booked: number
+  }
+  seats: SeatAPI[]
+}
+
