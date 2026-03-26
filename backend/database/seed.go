@@ -251,13 +251,16 @@ func Seed() {
 	// 5. SHOWTIMES
 	//    Spread across theaters so different cities have
 	//    different movie selections for testing.
-	//    5 days of shows with multiple time slots per day.
+	//    5 days of shows with multiple time slots.
 	// -------------------------------------------------------
-	day0 := time.Now().Format("2006-01-02")
-	day1 := time.Now().Add(24 * time.Hour).Format("2006-01-02")
-	day2 := time.Now().Add(48 * time.Hour).Format("2006-01-02")
-	day3 := time.Now().Add(72 * time.Hour).Format("2006-01-02")
-	day4 := time.Now().Add(96 * time.Hour).Format("2006-01-02")
+	// Using a FIXED base date so all developers get the exact same deterministic dataset!
+	baseDate := time.Date(2026, 3, 24, 0, 0, 0, 0, time.UTC)
+
+	day0 := baseDate.Format("2006-01-02")
+	day1 := baseDate.Add(24 * time.Hour).Format("2006-01-02")
+	day2 := baseDate.Add(48 * time.Hour).Format("2006-01-02")
+	day3 := baseDate.Add(72 * time.Hour).Format("2006-01-02")
+	day4 := baseDate.Add(96 * time.Hour).Format("2006-01-02")
 
 	showtimes := []models.Showtime{
 		// ===== Miami -- AMC Aventura (screen 0, IMAX) =====

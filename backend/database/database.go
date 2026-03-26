@@ -30,7 +30,9 @@ func Connect(dbPath string) {
 
     // Set SQLite PRAGMAs for concurrency and integrity
     sqlDB, _ := DB.DB()
-    sqlDB.Exec("PRAGMA journal_mode = WAL")
+    // Disabling WAL mode (using DELETE) because SQLite WAL over Docker Desktop 
+    // virtualized bind mounts (Mac/Windows) causes silent data loss and corruption.
+    sqlDB.Exec("PRAGMA journal_mode = DELETE")
     sqlDB.Exec("PRAGMA foreign_keys = ON")
     sqlDB.Exec("PRAGMA busy_timeout = 5000")
 
