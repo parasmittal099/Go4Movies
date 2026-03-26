@@ -23,6 +23,30 @@ Cleanup: A background Goroutine runs periodically to expire unpaid reservations,
 
 DevOps (Docker): The application is fully containerized. A single docker-compose.yml orchestrates the React frontend (served via Nginx or Vite preview) and the Go binary, ensuring the environment is identical for all developers.
 
+# Frontend Testing
+
+The frontend uses **Jest** and **React Testing Library** for unit testing, covering all major components, hooks, contexts, and API utilities.
+
+**Coverage:** 106 tests across 13 test suites. All business-logic files (components, hooks, contexts, API client) achieve **80%+ coverage**.
+
+**What's tested:**
+- `lib/api.ts` — all fetch functions (success + error paths)
+- `hooks/useZipCode.ts` — localStorage read/write/clear/redirect
+- `context/auth-context.tsx` / `movies-context.tsx` — state, localStorage rehydration
+- `components/auth/` — login + signup form validation, API calls, toggle states
+- `components/movies/` — MovieCard, MovieGrid, MovieDetail (date selection, booking bar)
+- `components/booking/SeatSelection` — seat loading, selection, pricing, error states
+- `components/layout/Header` — auth states, search open/close/escape
+- `components/ui/SearchBar`, `ZipCodeModal` — input, filtering, location selection
+
+**Run tests:**
+```bash
+cd frontend
+npm test                # Run all tests
+npm run test:watch      # Watch mode
+npm run test:coverage   # With coverage report
+```
+
 # Members 
 Harsh Soni - FrontEnd \
 Paresh Devlekar - FrontEnd \
