@@ -2,15 +2,6 @@
  * Tests for API client functions in src/lib/api.ts
  */
 
-import {
-  fetchLocations,
-  fetchMoviesByZipCode,
-  fetchMovieById,
-  registerUser,
-  loginUser,
-  fetchMovieShowtimes,
-  fetchShowtimeSeats,
-} from '../api'
 
 const BASE = 'http://localhost:8080'
 
