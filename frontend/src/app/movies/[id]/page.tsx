@@ -73,7 +73,16 @@ export default function MoviePage() {
           format: selectedShowtime?.format ?? "",
           hall: selectedShowtime?.screen_name ?? "",
         }}
-        onProceed={(seats) => alert(`Proceeding to payment with seats: ${seats.map(s => s.id).join(', ')}`)}
+        onProceed={(seats) => {
+          const ids = seats.map((s) => s.id).join(",")
+          const dbSeatIds = seats.map((s) => s.dbId).join(",")
+          const query = new URLSearchParams({
+            showtimeId: String(selectedShowtime?.id ?? selectedShowtimeId ?? ""),
+            seats: ids,
+            seatIds: dbSeatIds,
+          })
+          router.push(`/payment?${query.toString()}`)
+        }}
         onBack={() => setShowSeats(false)}
         onChangeMovie={() => router.push("/movies")}
       />
