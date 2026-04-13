@@ -19,6 +19,9 @@ func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
 		v1.GET("/movies/:id/showtimes", handlers.GetMovieShowtimes)
 		v1.GET("/seats", handlers.GetShowtimeSeats)
 
+		v1.POST("/checkout/preview", handlers.PreviewCheckout)
+		v1.POST("/checkout/confirm", handlers.ConfirmCheckout)
+
 		auth := v1.Group("/auth")
 		{
 			auth.POST("/register", handlers.Register)
