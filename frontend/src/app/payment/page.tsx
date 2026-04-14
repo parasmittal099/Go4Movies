@@ -320,11 +320,6 @@ export default function PaymentPage() {
                 </div>
               </div>
 
-              <div>
-                <p className="text-xs uppercase tracking-wide text-neutral-500">Showtime ID</p>
-                <p className="mt-1 text-sm font-medium">{showtimeId || "N/A"}</p>
-              </div>
-
               <div className="space-y-2 border-t border-neutral-800 pt-4 text-sm">
                 {previewLoading ? (
                   <p className="text-center text-xs text-neutral-500">Loading pricing...</p>
