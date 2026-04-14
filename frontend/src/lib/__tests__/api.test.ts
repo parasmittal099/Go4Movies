@@ -10,6 +10,8 @@ import {
   loginUser,
   fetchMovieShowtimes,
   fetchShowtimeSeats,
+  previewCheckout,
+  confirmCheckout,
 } from '../api'
 
 const BASE = 'http://localhost:8080'
@@ -168,5 +170,53 @@ describe('fetchShowtimeSeats', () => {
       json: jest.fn().mockResolvedValue({}),
     } as unknown as Response)
     await expect(fetchShowtimeSeats(42)).rejects.toThrow('Failed to fetch seats')
+  })
+})
+
+describe('previewCheckout', () => {
+  const payload = { user_id: 1, showtime_id: 100, seat_ids: [1, 2] }
+
+  it('returns checkout quote on success', async () => {
+    const quoteResp = { subtotal: 20, tax: 2, total: 22 }
+    mockFetch(quoteResp)
+    const result = await previewCheckout(payload)
+    expect(result).toEqual(quoteResp)
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${BASE}/api/v1/checkout/preview`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) })
+    )
+  })
+
+  it('throws on failure', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: jest.fn().mockResolvedValue({}),
+    } as unknown as Response)
+    await expect(previewCheckout(payload)).rejects.toThrow('Failed to get checkout preview')
+  })
+})
+
+describe('confirmCheckout', () => {
+  const payload = { user_id: 1, showtime_id: 100, seat_ids: [1, 2], discount_code: 'SALE' }
+
+  it('returns confirm response on success', async () => {
+    const confirmResp = { booking_id: 123, status: 'CONFIRMED' }
+    mockFetch(confirmResp)
+    const result = await confirmCheckout(payload)
+    expect(result).toEqual(confirmResp)
+    expect(global.fetch).toHaveBeenCalledWith(
+      `${BASE}/api/v1/checkout/confirm`,
+      expect.objectContaining({ method: 'POST', body: JSON.stringify(payload) })
+    )
+  })
+
+  it('throws on failure', async () => {
+    global.fetch = jest.fn().mockResolvedValue({
+      ok: false,
+      status: 500,
+      json: jest.fn().mockResolvedValue({}),
+    } as unknown as Response)
+    await expect(confirmCheckout(payload)).rejects.toThrow('Failed to confirm booking')
   })
 })
