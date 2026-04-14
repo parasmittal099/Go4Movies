@@ -3,6 +3,8 @@
 
 import {
   AuthSuccessResponse,
+  CheckoutConfirmResponse,
+  CheckoutQuote,
   Location,
   LoginPayload,
   Movie,
@@ -105,5 +107,30 @@ export async function fetchMovieShowtimes(
 export async function fetchShowtimeSeats(showtimeId: number): Promise<SeatsResponse> {
   const response = await fetch(`${API_BASE_URL}/api/v1/seats?showtime_id=${showtimeId}`)
   return parseResponse<SeatsResponse>(response, "Failed to fetch seats")
+}
+
+export interface CheckoutPayload {
+  user_id: number
+  showtime_id: number
+  seat_ids: number[]
+  discount_code?: string
+}
+
+export async function previewCheckout(payload: CheckoutPayload): Promise<CheckoutQuote> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/checkout/preview`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  return parseResponse<CheckoutQuote>(response, "Failed to get checkout preview")
+}
+
+export async function confirmCheckout(payload: CheckoutPayload): Promise<CheckoutConfirmResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/checkout/confirm`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  })
+  return parseResponse<CheckoutConfirmResponse>(response, "Failed to confirm booking")
 }
 

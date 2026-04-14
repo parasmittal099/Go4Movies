@@ -102,3 +102,35 @@ export interface SeatsResponse {
   seats: SeatAPI[]
 }
 
+export interface CheckoutLineItem {
+  seat_id: number
+  row_label: string
+  col_number: number
+  seat_type: string
+  unit_price: number
+}
+
+export interface CheckoutTotals {
+  subtotal: number
+  convenience_fee: number
+  tax_amount: number
+  discount_code?: string
+  discount_amount: number
+  total_due: number
+}
+
+export interface CheckoutQuote {
+  showtime_id: number
+  user_id: number
+  line_items: CheckoutLineItem[]
+  totals: CheckoutTotals
+}
+
+export interface CheckoutConfirmResponse {
+  message: string
+  booking_id: number
+  booking_ref: string
+  quote: CheckoutQuote
+  payment_id: number
+}
+
