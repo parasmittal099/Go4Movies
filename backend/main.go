@@ -2,11 +2,13 @@ package main
 
 import (
 	"log"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/config"
 	"github.com/parasmittal099/backend-project/database"
 	"github.com/parasmittal099/backend-project/routes"
+	"github.com/parasmittal099/backend-project/workers"
 )
 
 func main() {
@@ -15,6 +17,8 @@ func main() {
 	database.Connect(cfg.DBPath)
 	database.Migrate()
 	database.Seed()
+
+	workers.StartBookingExpiry(database.DB, 1*time.Minute)
 
 	r := gin.Default()
 	routes.RegisterRoutes(r, cfg)

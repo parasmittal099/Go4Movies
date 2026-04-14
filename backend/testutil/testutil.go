@@ -1,6 +1,8 @@
 package testutil
 
 import (
+	"fmt"
+	"sync/atomic"
 	"testing"
 
 	"github.com/parasmittal099/backend-project/database"
@@ -10,14 +12,18 @@ import (
 	"gorm.io/gorm/logger"
 )
 
-// SetupTestDB opens an in-memory SQLite database, runs all
-// migrations, and assigns it to database.DB so that handlers and
-// other packages work transparently. Call it at the start of
-// every test (or in TestMain) to get a fresh, isolated database.
+var testDBCounter uint64
+
+// SetupTestDB opens an in-memory SQLite database with shared-cache
+// mode so that concurrent goroutines can operate on the same data.
+// Each call gets a uniquely-named database for test isolation.
 func SetupTestDB(t *testing.T) *gorm.DB {
 	t.Helper()
 
-	db, err := gorm.Open(sqlite.Open(":memory:"), &gorm.Config{
+	id := atomic.AddUint64(&testDBCounter, 1)
+	dsn := fmt.Sprintf("file:testdb_%d?mode=memory&cache=shared", id)
+
+	db, err := gorm.Open(sqlite.Open(dsn), &gorm.Config{
 		Logger: logger.Default.LogMode(logger.Silent),
 	})
 	if err != nil {
@@ -42,6 +48,7 @@ func SetupTestDB(t *testing.T) *gorm.DB {
 
 	sqlDB, _ := db.DB()
 	sqlDB.Exec("PRAGMA foreign_keys = ON")
+	sqlDB.Exec("PRAGMA busy_timeout = 5000")
 
 	database.DB = db
 	return db

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 	"time"
 
@@ -100,7 +101,6 @@ func TestPreviewCheckout_Success_NoDiscount(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &resp)
 
 	totals := resp["totals"].(map[string]any)
-	// subtotal 100, fee 2, tax on 102 = 8.16, total 110.16
 	if totals["subtotal"].(float64) != 100 {
 		t.Errorf("subtotal want 100 got %v", totals["subtotal"])
 	}
@@ -124,10 +124,10 @@ func TestPreviewCheckout_Mock100_ZeroTotal(t *testing.T) {
 	r := setupCheckoutRouter()
 
 	w := postJSONCheckout(t, r, "/checkout/preview", map[string]any{
-		"user_id":        td.User.ID,
-		"showtime_id":    td.Showtime.ID,
-		"seat_ids":       []uint{td.Seat1.ID},
-		"discount_code":  discountCodeMock100,
+		"user_id":       td.User.ID,
+		"showtime_id":   td.Showtime.ID,
+		"seat_ids":      []uint{td.Seat1.ID},
+		"discount_code": discountCodeMock100,
 	})
 
 	if w.Code != http.StatusOK {
@@ -293,10 +293,10 @@ func TestConfirmCheckout_CreatesBookingAndPayment(t *testing.T) {
 	r := setupCheckoutRouter()
 
 	w := postJSONCheckout(t, r, "/checkout/confirm", map[string]any{
-		"user_id":        td.User.ID,
-		"showtime_id":    td.Showtime.ID,
-		"seat_ids":       []uint{td.Seat1.ID},
-		"discount_code":  discountCodeMock100,
+		"user_id":       td.User.ID,
+		"showtime_id":   td.Showtime.ID,
+		"seat_ids":      []uint{td.Seat1.ID},
+		"discount_code": discountCodeMock100,
 	})
 	if w.Code != http.StatusCreated {
 		t.Fatalf("expected 201, got %d: %s", w.Code, w.Body.String())
@@ -347,5 +347,123 @@ func TestConfirmCheckout_ThenPreviewConflict(t *testing.T) {
 	w2 := postJSONCheckout(t, r, "/checkout/preview", body)
 	if w2.Code != http.StatusConflict {
 		t.Fatalf("second preview want 409, got %d: %s", w2.Code, w2.Body.String())
+	}
+}
+
+func TestConfirmCheckout_ConcurrentSameSeat_OnlyOneWins(t *testing.T) {
+	testutil.SetupTestDB(t)
+	td := seedCheckoutData(t)
+	r := setupCheckoutRouter()
+
+	user2 := models.User{
+		Email: "user2@test.com", Username: "user2",
+		Password: "secret12", FullName: "User Two",
+	}
+	database.DB.Create(&user2)
+
+	const goroutines = 3
+	type result struct {
+		code int
+		body string
+	}
+	results := make([]result, goroutines)
+	var wg sync.WaitGroup
+	wg.Add(goroutines)
+
+	for i := 0; i < goroutines; i++ {
+		go func(idx int) {
+			defer wg.Done()
+			uid := td.User.ID
+			if idx%2 == 1 {
+				uid = user2.ID
+			}
+			w := postJSONCheckout(t, r, "/checkout/confirm", map[string]any{
+				"user_id":     uid,
+				"showtime_id": td.Showtime.ID,
+				"seat_ids":    []uint{td.Seat1.ID},
+			})
+			results[idx] = result{code: w.Code, body: w.Body.String()}
+		}(i)
+	}
+	wg.Wait()
+
+	wins := 0
+	for _, res := range results {
+		if res.code == http.StatusCreated {
+			wins++
+		}
+		// 409 = conflict detection, 500 = SQLite write-lock contention,
+		// 404 = transient shared-cache visibility; all acceptable for losers
+	}
+
+	// The critical invariant: at most 1 booking exists for that seat+showtime.
+	var bookingCount int64
+	database.DB.Model(&models.BookingSeat{}).
+		Where("showtime_id = ? AND seat_id = ?", td.Showtime.ID, td.Seat1.ID).
+		Count(&bookingCount)
+	if bookingCount > 1 {
+		t.Fatalf("DOUBLE BOOKING: found %d booking_seat rows for the same seat", bookingCount)
+	}
+	if wins > 1 {
+		t.Fatalf("DOUBLE BOOKING: %d goroutines got 201 Created", wins)
+	}
+	if wins == 0 && bookingCount == 0 {
+		t.Log("all goroutines lost to SQLite contention; this is acceptable for in-memory SQLite tests")
+	}
+}
+
+func TestConfirmCheckout_SequentialDoubleBook_Rejected(t *testing.T) {
+	testutil.SetupTestDB(t)
+	td := seedCheckoutData(t)
+	r := setupCheckoutRouter()
+
+	body := map[string]any{
+		"user_id":     td.User.ID,
+		"showtime_id": td.Showtime.ID,
+		"seat_ids":    []uint{td.Seat1.ID},
+	}
+
+	w1 := postJSONCheckout(t, r, "/checkout/confirm", body)
+	if w1.Code != http.StatusCreated {
+		t.Fatalf("first confirm: expected 201, got %d: %s", w1.Code, w1.Body.String())
+	}
+
+	w2 := postJSONCheckout(t, r, "/checkout/confirm", body)
+	if w2.Code != http.StatusConflict {
+		t.Fatalf("second confirm: expected 409, got %d: %s", w2.Code, w2.Body.String())
+	}
+
+	var count int64
+	database.DB.Model(&models.BookingSeat{}).
+		Where("showtime_id = ? AND seat_id = ?", td.Showtime.ID, td.Seat1.ID).
+		Count(&count)
+	if count != 1 {
+		t.Errorf("expected exactly 1 booking_seat row, got %d", count)
+	}
+}
+
+func TestPreviewCheckout_ExpiredPendingSeatsAreAvailable(t *testing.T) {
+	testutil.SetupTestDB(t)
+	td := seedCheckoutData(t)
+
+	past := time.Now().Add(-5 * time.Minute)
+	booking := models.Booking{
+		UserID: td.User.ID, ShowtimeID: td.Showtime.ID, BookingRef: "EXPIRED-1",
+		Status: "PENDING", TotalAmount: 100, PaymentStatus: "UNPAID",
+		BookedAt: past, ExpiresAt: &past,
+	}
+	database.DB.Create(&booking)
+	database.DB.Create(&models.BookingSeat{
+		BookingID: booking.ID, SeatID: td.Seat1.ID, ShowtimeID: td.Showtime.ID, SeatPrice: 100,
+	})
+
+	r := setupCheckoutRouter()
+	w := postJSONCheckout(t, r, "/checkout/preview", map[string]any{
+		"user_id":     td.User.ID,
+		"showtime_id": td.Showtime.ID,
+		"seat_ids":    []uint{td.Seat1.ID},
+	})
+	if w.Code != http.StatusOK {
+		t.Fatalf("expired pending should not block, got %d: %s", w.Code, w.Body.String())
 	}
 }
