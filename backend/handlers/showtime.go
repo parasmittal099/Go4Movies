@@ -3,6 +3,7 @@ package handlers
 import (
 	"math"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/database"
@@ -154,18 +155,19 @@ func GetShowtimeSeats(c *gin.Context) {
 		return
 	}
 
-	// Booked / reserved seats for this showtime
+	// Booked / reserved seats — exclude expired PENDING bookings
 	type bsRow struct {
 		SeatID        uint
 		BookingStatus string
 	}
 	var bsRows []bsRow
+	now := time.Now()
 	database.DB.Table("booking_seats").
 		Select("booking_seats.seat_id, bookings.status AS booking_status").
 		Joins("JOIN bookings ON bookings.id = booking_seats.booking_id").
 		Where("booking_seats.showtime_id = ? AND bookings.status IN ?",
-			showtime.ID, []string{"PENDING", "CONFIRMED"},
-		).
+			showtime.ID, []string{"PENDING", "CONFIRMED"}).
+		Where("bookings.status = 'CONFIRMED' OR bookings.expires_at IS NULL OR bookings.expires_at > ?", now).
 		Scan(&bsRows)
 
 	statusMap := make(map[uint]string, len(bsRows))

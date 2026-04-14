@@ -15,6 +15,7 @@ type Booking struct {
 	TaxAmount      float64       `gorm:"not null;default:0" json:"tax_amount"`
 	PaymentStatus  string        `gorm:"not null;default:UNPAID" json:"payment_status"`
 	BookedAt       time.Time     `gorm:"not null" json:"booked_at"`
+	ExpiresAt      *time.Time    `gorm:"index" json:"expires_at,omitempty"`
 	CancelledAt    *time.Time    `json:"cancelled_at,omitempty"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
@@ -25,9 +26,9 @@ type BookingSeat struct {
 	ID         uint    `gorm:"primaryKey" json:"id"`
 	BookingID  uint    `gorm:"uniqueIndex:idx_bs_unique;not null" json:"booking_id"`
 	Booking    Booking `gorm:"foreignKey:BookingID;constraint:OnDelete:CASCADE" json:"-"`
-	SeatID     uint    `gorm:"uniqueIndex:idx_bs_unique;not null" json:"seat_id"`
+	SeatID     uint    `gorm:"uniqueIndex:idx_bs_unique;uniqueIndex:idx_showtime_seat;not null" json:"seat_id"`
 	Seat       Seat    `gorm:"foreignKey:SeatID" json:"seat,omitempty"`
-	ShowtimeID uint    `gorm:"not null" json:"showtime_id"`
+	ShowtimeID uint    `gorm:"uniqueIndex:idx_showtime_seat;not null" json:"showtime_id"`
 	SeatPrice  float64 `gorm:"not null" json:"seat_price"`
 }
 
