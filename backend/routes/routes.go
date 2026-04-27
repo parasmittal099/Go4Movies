@@ -21,6 +21,7 @@ func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
 
 		v1.POST("/checkout/preview", handlers.PreviewCheckout)
 		v1.POST("/checkout/confirm", handlers.ConfirmCheckout)
+		v1.GET("/bookings", handlers.GetUserBookings)
 
 		auth := v1.Group("/auth")
 		{
