@@ -3,6 +3,7 @@
 
 import {
   AuthSuccessResponse,
+  BookingDetail,
   CheckoutConfirmResponse,
   CheckoutQuote,
   Location,
@@ -132,5 +133,14 @@ export async function confirmCheckout(payload: CheckoutPayload): Promise<Checkou
     body: JSON.stringify(payload),
   })
   return parseResponse<CheckoutConfirmResponse>(response, "Failed to confirm booking")
+}
+
+/**
+ * Fetch all bookings for a given user.
+ */
+export async function fetchUserBookings(userId: number): Promise<BookingDetail[]> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/bookings?user_id=${userId}`)
+  const data = await parseResponse<{ bookings: BookingDetail[] }>(response, "Failed to fetch bookings")
+  return data.bookings
 }
 

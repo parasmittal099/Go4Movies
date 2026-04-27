@@ -98,6 +98,18 @@ export function Header() {
 
       <div className="hidden md:flex flex-1 justify-end gap-8 items-center">
         <div className="flex gap-3 items-center">
+          {/* ---- My Tickets (visible when logged in) ---- */}
+          {user && (
+            <Link
+              href="/bookings"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-neutral-400 hover:text-white hover:bg-neutral-800 transition-all text-sm font-medium"
+            >
+              <span className="material-symbols-outlined text-base">
+                confirmation_number
+              </span>
+              My Tickets
+            </Link>
+          )}
           {/* ---- Search ---- */}
           <div ref={searchContainerRef} className="relative">
             {searchOpen ? (

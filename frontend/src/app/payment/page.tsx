@@ -128,7 +128,8 @@ export default function PaymentPage() {
         seat_ids: selectedSeatDbIds,
         ...(appliedDiscount ? { discount_code: appliedDiscount } : {}),
       })
-      setSuccessMessage(`Booking confirmed! Your booking reference: ${data.booking_ref}`)
+      // Redirect to the booking confirmation page
+      router.push(`/booking-confirmation?ref=${data.booking_ref}`)
     } catch (error) {
       setSubmitError(error instanceof Error ? error.message : "Something went wrong while submitting")
     } finally {
