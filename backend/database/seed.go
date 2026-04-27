@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/parasmittal099/backend-project/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func strPtr(s string) *string {
@@ -415,11 +416,17 @@ func Seed() {
 		{MovieID: movies[1].ID, ScreenID: screens[6].ID, ShowDate: day3, StartTime: "20:00", EndTime: "21:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
 		{MovieID: movies[1].ID, ScreenID: screens[6].ID, ShowDate: day4, StartTime: "19:00", EndTime: "20:47", Language: "English", Format: "2D", PriceMultiplier: 1.0, IsActive: true},
 	}
+	seedPasswordHash, err := bcrypt.GenerateFromPassword([]byte("Password"), bcrypt.DefaultCost)
+	if err != nil {
+		log.Printf("Failed to hash seed user password: %v", err)
+		return
+	}
+
 	user := models.User{
 		Username: "Tester 1",
 		FullName: "Tester John",
 		Email:    "tester@go4movies.com",
-		Password: "Password",
+		Password: string(seedPasswordHash),
 		Phone:    strPtr("999999999"),
 	}
 	DB.Create(&user)

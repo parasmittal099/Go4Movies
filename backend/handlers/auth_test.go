@@ -11,6 +11,7 @@ import (
 	"github.com/parasmittal099/backend-project/database"
 	"github.com/parasmittal099/backend-project/models"
 	"github.com/parasmittal099/backend-project/testutil"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func init() {
@@ -48,6 +49,17 @@ func TestRegister_Success(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if resp["message"] != "User registered successfully" {
 		t.Errorf("unexpected message: %v", resp["message"])
+	}
+
+	var user models.User
+	if err := database.DB.Where("email = ?", "alice@test.com").First(&user).Error; err != nil {
+		t.Fatalf("failed to fetch created user: %v", err)
+	}
+	if user.Password == "secret123" {
+		t.Fatalf("password must be hashed, found plain-text")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte("secret123")); err != nil {
+		t.Fatalf("stored password hash does not match original password: %v", err)
 	}
 }
 
@@ -120,8 +132,12 @@ func TestRegister_EmailNormalized(t *testing.T) {
 
 func TestLogin_Success(t *testing.T) {
 	testutil.SetupTestDB(t)
+	hash, err := bcrypt.GenerateFromPassword([]byte("mypass"), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("hash generation failed: %v", err)
+	}
 	database.DB.Create(&models.User{
-		Email: "bob@test.com", Username: "bob", Password: "mypass", FullName: "Bob",
+		Email: "bob@test.com", Username: "bob", Password: string(hash), FullName: "Bob",
 	})
 	r := setupAuthRouter()
 
@@ -148,8 +164,12 @@ func TestLogin_Success(t *testing.T) {
 
 func TestLogin_WrongPassword(t *testing.T) {
 	testutil.SetupTestDB(t)
+	hash, err := bcrypt.GenerateFromPassword([]byte("correct"), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("hash generation failed: %v", err)
+	}
 	database.DB.Create(&models.User{
-		Email: "bob2@test.com", Username: "bob2", Password: "correct", FullName: "Bob",
+		Email: "bob2@test.com", Username: "bob2", Password: string(hash), FullName: "Bob",
 	})
 	r := setupAuthRouter()
 

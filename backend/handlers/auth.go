@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/database"
 	"github.com/parasmittal099/backend-project/models"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // POST /api/v1/auth/register
@@ -27,9 +28,15 @@ func Register(c *gin.Context) {
 	user := models.User{
 		Email:    req.Email,
 		Username: req.Username,
-		Password: req.Password,
 		FullName: req.FullName,
 	}
+	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to hash password"})
+		return
+	}
+	user.Password = string(hash)
+
 	if err := database.DB.Create(&user).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create user"})
 		return
@@ -56,7 +63,7 @@ func Login(c *gin.Context) {
 		return
 	}
 
-	if user.Password != req.Password {
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)); err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid email or password"})
 		return
 	}
