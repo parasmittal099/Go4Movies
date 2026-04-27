@@ -66,6 +66,57 @@ func TestMigratePlaintextPasswords_LeavesBcryptUntouched(t *testing.T) {
 	}
 }
 
+func TestMigratePlaintextPasswords_MixedDatasetAndIdempotent(t *testing.T) {
+	tmp := t.TempDir()
+	Connect(filepath.Join(tmp, "migrate_mixed.db"))
+	Migrate()
+
+	hashed, err := bcrypt.GenerateFromPassword([]byte("Strong@123"), bcrypt.DefaultCost)
+	if err != nil {
+		t.Fatalf("hash generation failed: %v", err)
+	}
+
+	users := []models.User{
+		{Email: "plain1@test.com", Username: "plain1", Password: "Plain@123", FullName: "Plain One"},
+		{Email: "hashed1@test.com", Username: "hashed1", Password: string(hashed), FullName: "Hashed One"},
+		{Email: "empty1@test.com", Username: "empty1", Password: "", FullName: "Empty One"},
+	}
+	for _, u := range users {
+		if err := DB.Create(&u).Error; err != nil {
+			t.Fatalf("create user failed: %v", err)
+		}
+	}
+
+	// First pass should migrate plain text and keep others safe.
+	MigratePlaintextPasswords()
+
+	var plainAfter, hashedAfter, emptyAfter models.User
+	DB.Where("email = ?", "plain1@test.com").First(&plainAfter)
+	DB.Where("email = ?", "hashed1@test.com").First(&hashedAfter)
+	DB.Where("email = ?", "empty1@test.com").First(&emptyAfter)
+
+	if !isBcryptHash(plainAfter.Password) {
+		t.Fatalf("plain user should be migrated to bcrypt")
+	}
+	if err := bcrypt.CompareHashAndPassword([]byte(plainAfter.Password), []byte("Plain@123")); err != nil {
+		t.Fatalf("migrated plain user hash mismatch: %v", err)
+	}
+	if hashedAfter.Password != string(hashed) {
+		t.Fatalf("already hashed password should remain unchanged")
+	}
+	if emptyAfter.Password != "" {
+		t.Fatalf("empty password should remain unchanged")
+	}
+
+	// Second pass should be idempotent (no changes).
+	before := plainAfter.Password
+	MigratePlaintextPasswords()
+	DB.Where("email = ?", "plain1@test.com").First(&plainAfter)
+	if plainAfter.Password != before {
+		t.Fatalf("migration must be idempotent on second run")
+	}
+}
+
 func TestIsBcryptHash(t *testing.T) {
 	if !isBcryptHash("$2b$10$abcdefghijklmnopqrstuv1234567890abcdefghi") {
 		t.Fatalf("expected bcrypt prefix detection for $2b$")
