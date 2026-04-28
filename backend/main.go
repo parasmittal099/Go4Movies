@@ -16,6 +16,7 @@ func main() {
 	cfg := config.LoadConfig()
 	database.Connect(cfg.DBPath)
 	database.Migrate()
+	database.MigratePlaintextPasswords()
 	database.Seed()
 
 	workers.StartBookingExpiry(database.DB, 1*time.Minute)
