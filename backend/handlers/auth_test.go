@@ -19,6 +19,7 @@ func init() {
 }
 
 func setupAuthRouter() *gin.Engine {
+	JWTSecret = "test-jwt-secret"
 	r := gin.New()
 	r.POST("/register", Register)
 	r.POST("/login", Login)
@@ -49,6 +50,9 @@ func TestRegister_Success(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if resp["message"] != "User registered successfully" {
 		t.Errorf("unexpected message: %v", resp["message"])
+	}
+	if resp["token"] == nil || resp["token"] == "" {
+		t.Errorf("expected a JWT token in register response")
 	}
 
 	var user models.User
@@ -233,6 +237,9 @@ func TestLogin_Success(t *testing.T) {
 	json.Unmarshal(w.Body.Bytes(), &resp)
 	if resp["message"] != "Login successful" {
 		t.Errorf("unexpected message: %v", resp["message"])
+	}
+	if resp["token"] == nil || resp["token"] == "" {
+		t.Errorf("expected a JWT token in login response")
 	}
 }
 

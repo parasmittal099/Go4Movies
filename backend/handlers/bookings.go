@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"net/http"
-	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/database"
@@ -38,19 +37,14 @@ type bookingHistoryItem struct {
 	Seats          []bookingSeatHistory `json:"seats"`
 }
 
-// GET /api/v1/bookings?user_id=<id>
+// GET /api/v1/bookings (JWT-protected – user_id from token)
 func GetUserBookings(c *gin.Context) {
-	userIDParam := c.Query("user_id")
-	if userIDParam == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id query parameter is required"})
+	uid, exists := c.Get("user_id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-
-	userID, err := strconv.Atoi(userIDParam)
-	if err != nil || userID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id must be a positive integer"})
-		return
-	}
+	userID := uid.(uint)
 
 	var bookings []models.Booking
 	if err := database.DB.

@@ -4,23 +4,36 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
-	"strconv"
 	"testing"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/database"
 	"github.com/parasmittal099/backend-project/models"
+	"github.com/parasmittal099/backend-project/middleware"
 	"github.com/parasmittal099/backend-project/testutil"
 )
 
+const bookingsTestSecret = "test-jwt-secret"
+
 func setupBookingsRouter() *gin.Engine {
 	r := gin.New()
-	r.GET("/bookings", GetUserBookings)
+	r.GET("/bookings", middleware.JWTAuth(bookingsTestSecret), GetUserBookings)
 	return r
 }
 
 func strPtrBookings(s string) *string { return &s }
+
+func bookingsAuthRequest(t *testing.T, method, url string, userID uint) *http.Request {
+	t.Helper()
+	req, _ := http.NewRequest(method, url, nil)
+	tok, err := middleware.GenerateToken(userID, bookingsTestSecret)
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+	req.Header.Set("Authorization", "Bearer "+tok)
+	return req
+}
 
 func seedBookingHistoryData(t *testing.T) (models.User, models.User, []models.Booking) {
 	t.Helper()
@@ -89,7 +102,7 @@ func TestGetUserBookings_SuccessOrderedAndMapped(t *testing.T) {
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/bookings?user_id="+fmtUint(u1.ID), nil)
+	req := bookingsAuthRequest(t, "GET", "/bookings", u1.ID)
 	r.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -128,7 +141,7 @@ func TestGetUserBookings_Empty(t *testing.T) {
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/bookings?user_id=9999", nil)
+	req := bookingsAuthRequest(t, "GET", "/bookings", 9999)
 	r.ServeHTTP(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
@@ -141,39 +154,28 @@ func TestGetUserBookings_Empty(t *testing.T) {
 	}
 }
 
-func TestGetUserBookings_MissingUserID(t *testing.T) {
+func TestGetUserBookings_NoToken(t *testing.T) {
 	testutil.SetupTestDB(t)
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/bookings", nil)
 	r.ServeHTTP(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Code)
 	}
 }
 
-func TestGetUserBookings_NonNumericUserID(t *testing.T) {
+func TestGetUserBookings_InvalidToken(t *testing.T) {
 	testutil.SetupTestDB(t)
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/bookings?user_id=abc", nil)
+	req, _ := http.NewRequest("GET", "/bookings", nil)
+	req.Header.Set("Authorization", "Bearer invalid-token")
 	r.ServeHTTP(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
-	}
-}
-
-func TestGetUserBookings_InvalidUserID(t *testing.T) {
-	testutil.SetupTestDB(t)
-	r := setupBookingsRouter()
-
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/bookings?user_id=0", nil)
-	r.ServeHTTP(w, req)
-	if w.Code != http.StatusBadRequest {
-		t.Fatalf("expected 400, got %d", w.Code)
+	if w.Code != http.StatusUnauthorized {
+		t.Fatalf("expected 401, got %d", w.Code)
 	}
 }
 
@@ -183,7 +185,7 @@ func TestGetUserBookings_IsolationByUser(t *testing.T) {
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/bookings?user_id="+fmtUint(u2.ID), nil)
+	req := bookingsAuthRequest(t, "GET", "/bookings", u2.ID)
 	r.ServeHTTP(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
@@ -200,7 +202,4 @@ func TestGetUserBookings_IsolationByUser(t *testing.T) {
 	}
 }
 
-func fmtUint(v uint) string {
-	return strconv.FormatUint(uint64(v), 10)
-}
 
