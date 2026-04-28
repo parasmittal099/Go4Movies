@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -9,8 +10,8 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/database"
-	"github.com/parasmittal099/backend-project/models"
 	"github.com/parasmittal099/backend-project/middleware"
+	"github.com/parasmittal099/backend-project/models"
 	"github.com/parasmittal099/backend-project/testutil"
 )
 
@@ -18,7 +19,7 @@ const bookingsTestSecret = "test-jwt-secret"
 
 func setupBookingsRouter() *gin.Engine {
 	r := gin.New()
-	r.GET("/bookings", middleware.JWTAuth(bookingsTestSecret), GetUserBookings)
+	r.GET("/bookings", middleware.OptionalJWTAuth(bookingsTestSecret), GetUserBookings)
 	return r
 }
 
@@ -96,7 +97,7 @@ func seedBookingHistoryData(t *testing.T) (models.User, models.User, []models.Bo
 	return user1, user2, []models.Booking{b1, b2, bOther}
 }
 
-func TestGetUserBookings_SuccessOrderedAndMapped(t *testing.T) {
+func TestGetUserBookings_SuccessWithJWT(t *testing.T) {
 	testutil.SetupTestDB(t)
 	u1, _, _ := seedBookingHistoryData(t)
 	r := setupBookingsRouter()
@@ -136,12 +137,32 @@ func TestGetUserBookings_SuccessOrderedAndMapped(t *testing.T) {
 	}
 }
 
+func TestGetUserBookings_SuccessWithQueryParam(t *testing.T) {
+	testutil.SetupTestDB(t)
+	u1, _, _ := seedBookingHistoryData(t)
+	r := setupBookingsRouter()
+
+	w := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/bookings?user_id=%d", u1.ID), nil)
+	r.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Fatalf("expected 200, got %d: %s", w.Code, w.Body.String())
+	}
+	var resp map[string]any
+	_ = json.Unmarshal(w.Body.Bytes(), &resp)
+	bookings := resp["bookings"].([]any)
+	if len(bookings) != 2 {
+		t.Fatalf("expected 2 bookings for user1 via query param, got %d", len(bookings))
+	}
+}
+
 func TestGetUserBookings_Empty(t *testing.T) {
 	testutil.SetupTestDB(t)
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
-	req := bookingsAuthRequest(t, "GET", "/bookings", 9999)
+	req, _ := http.NewRequest("GET", "/bookings?user_id=9999", nil)
 	r.ServeHTTP(w, req)
 	if w.Code != http.StatusOK {
 		t.Fatalf("expected 200, got %d", w.Code)
@@ -154,28 +175,27 @@ func TestGetUserBookings_Empty(t *testing.T) {
 	}
 }
 
-func TestGetUserBookings_NoToken(t *testing.T) {
+func TestGetUserBookings_MissingUserID(t *testing.T) {
 	testutil.SetupTestDB(t)
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/bookings", nil)
 	r.ServeHTTP(w, req)
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d", w.Code)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
 
-func TestGetUserBookings_InvalidToken(t *testing.T) {
+func TestGetUserBookings_InvalidQueryParam(t *testing.T) {
 	testutil.SetupTestDB(t)
 	r := setupBookingsRouter()
 
 	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/bookings", nil)
-	req.Header.Set("Authorization", "Bearer invalid-token")
+	req, _ := http.NewRequest("GET", "/bookings?user_id=abc", nil)
 	r.ServeHTTP(w, req)
-	if w.Code != http.StatusUnauthorized {
-		t.Fatalf("expected 401, got %d", w.Code)
+	if w.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d", w.Code)
 	}
 }
 
@@ -201,5 +221,3 @@ func TestGetUserBookings_IsolationByUser(t *testing.T) {
 		t.Fatalf("expected G4M-other booking for user2, got %v", ref)
 	}
 }
-
-

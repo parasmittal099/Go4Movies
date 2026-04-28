@@ -63,3 +63,35 @@ func JWTAuth(secret string) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+// OptionalJWTAuth extracts user_id from a Bearer token if present,
+// but does NOT block the request when the header is missing or invalid.
+// Handlers can check c.Get("user_id") to see if the caller is authenticated.
+func OptionalJWTAuth(secret string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		header := c.GetHeader("Authorization")
+		if header == "" {
+			c.Next()
+			return
+		}
+
+		parts := strings.SplitN(header, " ", 2)
+		if len(parts) != 2 || !strings.EqualFold(parts[0], "bearer") {
+			c.Next()
+			return
+		}
+
+		claims := &Claims{}
+		token, err := jwt.ParseWithClaims(parts[1], claims, func(t *jwt.Token) (interface{}, error) {
+			if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+				return nil, jwt.ErrSignatureInvalid
+			}
+			return []byte(secret), nil
+		})
+
+		if err == nil && token.Valid {
+			c.Set("user_id", claims.UserID)
+		}
+		c.Next()
+	}
+}
