@@ -36,6 +36,8 @@ type bookingHistoryItem struct {
 	Format         string               `json:"format"`
 	Language       string               `json:"language"`
 	Seats          []bookingSeatHistory `json:"seats"`
+	TicketCode     string               `json:"ticket_code,omitempty"`
+	QRValue        string               `json:"qr_value,omitempty"`
 }
 
 func mapBookingHistoryItem(b models.Booking) bookingHistoryItem {
@@ -63,6 +65,11 @@ func mapBookingHistoryItem(b models.Booking) bookingHistoryItem {
 	item.ScreenName = b.Showtime.Screen.Name
 	item.ScreenType = b.Showtime.Screen.ScreenType
 	item.TheaterName = b.Showtime.Screen.Theater.Name
+
+	if b.QRTicket != nil {
+		item.TicketCode = b.QRTicket.TicketCode
+		item.QRValue = "G4M:" + b.QRTicket.TicketCode
+	}
 
 	seats := make([]bookingSeatHistory, 0, len(b.BookingSeats))
 	for _, bs := range b.BookingSeats {
@@ -101,6 +108,7 @@ func GetUserBookings(c *gin.Context) {
 		Preload("Showtime.Movie").
 		Preload("Showtime.Screen.Theater").
 		Preload("BookingSeats.Seat").
+		Preload("QRTicket").
 		Order("booked_at DESC").
 		Find(&bookings).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch bookings"})
