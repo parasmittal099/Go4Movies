@@ -16,5 +16,5 @@ COPY . .
 # Next.js default dev port
 EXPOSE 3000
 
-# Run the app in development mode
-CMD ["npm", "run", "dev"]
+# Run install on container start, then launch dev server
+CMD ["sh", "-c", "npm install && npm run dev"]
