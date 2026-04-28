@@ -134,3 +134,32 @@ export interface CheckoutConfirmResponse {
   payment_id: number
 }
 
+export interface BookingSeatDetail {
+  seat_id: number
+  row_label: string
+  col_number: number
+  seat_type: string
+  seat_price: number
+}
+
+export interface BookingDetail {
+  id: number
+  booking_ref: string
+  status: string
+  total_amount: number
+  convenience_fee: number
+  tax_amount: number
+  payment_status: string
+  booked_at: string
+  movie_title: string
+  movie_poster: string
+  theater_name: string
+  screen_name: string
+  screen_type: string
+  show_date: string
+  start_time: string
+  format: string
+  language: string
+  seats: BookingSeatDetail[]
+}
+
