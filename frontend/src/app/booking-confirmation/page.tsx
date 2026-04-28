@@ -89,7 +89,7 @@ export default function BookingConfirmationPage() {
         </div>
       )}
 
-      <div className="relative z-10 max-w-7xl mx-auto px-4 md:px-8 pt-12 md:pt-16">
+      <div className="screen-content relative z-10 max-w-7xl mx-auto px-4 md:px-8 pt-12 md:pt-16">
         {/* ─── Confirmation Badge ─── */}
         <div className="flex flex-col items-center text-center mb-10 animate-fade-in-up">
           <div className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-500/10 border border-green-500/20 rounded-full mb-6">
@@ -276,6 +276,91 @@ export default function BookingConfirmationPage() {
           </div>
         </div>
       </div>
+
+      <section className="ticket-print">
+        <div className="ticket-print-card">
+          <div className="ticket-print-qr-wrap">
+            <QRCode
+              value={booking.qr_value || booking.ticket_code || booking.booking_ref}
+              size={220}
+              style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+            />
+          </div>
+
+          <div className="ticket-print-details">
+            <h1 className="ticket-print-movie">{booking.movie_title}</h1>
+            <p><strong>Date:</strong> {booking.show_date}</p>
+            <p><strong>Time:</strong> {booking.start_time}</p>
+            <p><strong>Seats:</strong> {seatLabels}</p>
+          </div>
+
+          <p className="ticket-print-booking-id">Booking ID: {booking.booking_ref}</p>
+        </div>
+      </section>
+
+      <style jsx global>{`
+        .ticket-print {
+          display: none;
+        }
+
+        @media print {
+          @page {
+            size: auto;
+            margin: 12mm;
+          }
+
+          .screen-content {
+            display: none !important;
+          }
+
+          .ticket-print {
+            display: block !important;
+            width: 100%;
+          }
+
+          .ticket-print-card {
+            margin: 0 auto;
+            width: 100%;
+            max-width: 420px;
+            background: #ffffff;
+            color: #111111;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: none;
+            break-inside: avoid;
+          }
+
+          .ticket-print-qr-wrap {
+            margin: 0 auto 20px;
+            width: 240px;
+            background: #ffffff;
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+          }
+
+          .ticket-print-details {
+            margin-bottom: 18px;
+            line-height: 1.6;
+            font-size: 14px;
+          }
+
+          .ticket-print-movie {
+            margin: 0 0 10px;
+            font-size: 20px;
+            font-weight: 700;
+            line-height: 1.3;
+          }
+
+          .ticket-print-booking-id {
+            margin: 0;
+            font-size: 11px;
+            color: #4b5563;
+            text-align: left;
+          }
+        }
+      `}</style>
     </main>
   )
 }
