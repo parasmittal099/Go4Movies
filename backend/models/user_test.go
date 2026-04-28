@@ -16,7 +16,7 @@ func setupModelsDB(t *testing.T) *gorm.DB {
 	if err != nil {
 		t.Fatalf("failed to open test db: %v", err)
 	}
-	db.AutoMigrate(&User{}, &Location{}, &Movie{}, &Theater{}, &Screen{}, &Seat{}, &Showtime{}, &Booking{}, &BookingSeat{}, &Payment{})
+	db.AutoMigrate(&User{}, &Location{}, &Movie{}, &Theater{}, &Screen{}, &Seat{}, &Showtime{}, &Booking{}, &BookingSeat{}, &Payment{}, &QRTicket{})
 	sqlDB, _ := db.DB()
 	sqlDB.Exec("PRAGMA foreign_keys = ON")
 	return db

@@ -128,3 +128,33 @@ func TestPayment_Create(t *testing.T) {
 		t.Error("expected non-zero ID")
 	}
 }
+
+func TestQRTicket_UniqueTicketCode(t *testing.T) {
+	db := setupModelsDB(t)
+	user, st, _ := seedBookingData(t, db)
+
+	booking1 := Booking{UserID: user.ID, ShowtimeID: st.ID, BookingRef: "QR-REF-1", Status: "CONFIRMED", TotalAmount: 18.0, PaymentStatus: "PAID", BookedAt: time.Now()}
+	booking2 := Booking{UserID: user.ID, ShowtimeID: st.ID, BookingRef: "QR-REF-2", Status: "CONFIRMED", TotalAmount: 18.0, PaymentStatus: "PAID", BookedAt: time.Now()}
+	db.Create(&booking1)
+	db.Create(&booking2)
+
+	db.Create(&QRTicket{BookingID: booking1.ID, TicketCode: "same-code"})
+	err := db.Create(&QRTicket{BookingID: booking2.ID, TicketCode: "same-code"}).Error
+	if err == nil {
+		t.Error("expected unique constraint violation on ticket_code")
+	}
+}
+
+func TestQRTicket_OnePerBooking(t *testing.T) {
+	db := setupModelsDB(t)
+	user, st, _ := seedBookingData(t, db)
+
+	booking := Booking{UserID: user.ID, ShowtimeID: st.ID, BookingRef: "QR-ONE-BOOKING", Status: "CONFIRMED", TotalAmount: 18.0, PaymentStatus: "PAID", BookedAt: time.Now()}
+	db.Create(&booking)
+
+	db.Create(&QRTicket{BookingID: booking.ID, TicketCode: "code-1"})
+	err := db.Create(&QRTicket{BookingID: booking.ID, TicketCode: "code-2"}).Error
+	if err == nil {
+		t.Error("expected unique constraint violation on booking_id")
+	}
+}

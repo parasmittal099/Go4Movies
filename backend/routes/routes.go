@@ -21,6 +21,7 @@ func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
 		v1.POST("/checkout/preview", handlers.PreviewCheckout)
 		v1.POST("/checkout/confirm", middleware.OptionalJWTAuth(cfg.JWTSecret), handlers.ConfirmCheckout)
 		v1.GET("/bookings", middleware.OptionalJWTAuth(cfg.JWTSecret), handlers.GetUserBookings)
+		v1.GET("/bookings/by-ticket", handlers.GetBookingByTicketCode)
 
 		auth := v1.Group("/auth")
 		{

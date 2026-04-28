@@ -38,6 +38,46 @@ type bookingHistoryItem struct {
 	Seats          []bookingSeatHistory `json:"seats"`
 }
 
+func mapBookingHistoryItem(b models.Booking) bookingHistoryItem {
+	item := bookingHistoryItem{
+		ID:             b.ID,
+		BookingRef:     b.BookingRef,
+		Status:         b.Status,
+		TotalAmount:    b.TotalAmount,
+		ConvenienceFee: b.ConvenienceFee,
+		TaxAmount:      b.TaxAmount,
+		PaymentStatus:  b.PaymentStatus,
+		BookedAt:       b.BookedAt.UTC().Format("2006-01-02T15:04:05Z"),
+		ShowDate:       b.Showtime.ShowDate,
+		StartTime:      b.Showtime.StartTime,
+		Format:         b.Showtime.Format,
+		Language:       b.Showtime.Language,
+	}
+
+	if b.Showtime.Movie.Title != "" {
+		item.MovieTitle = b.Showtime.Movie.Title
+	}
+	if b.Showtime.Movie.PosterURL != nil {
+		item.MoviePoster = *b.Showtime.Movie.PosterURL
+	}
+	item.ScreenName = b.Showtime.Screen.Name
+	item.ScreenType = b.Showtime.Screen.ScreenType
+	item.TheaterName = b.Showtime.Screen.Theater.Name
+
+	seats := make([]bookingSeatHistory, 0, len(b.BookingSeats))
+	for _, bs := range b.BookingSeats {
+		seats = append(seats, bookingSeatHistory{
+			SeatID:    bs.SeatID,
+			RowLabel:  bs.Seat.RowLabel,
+			ColNumber: bs.Seat.ColNumber,
+			SeatType:  bs.Seat.SeatType,
+			SeatPrice: bs.SeatPrice,
+		})
+	}
+	item.Seats = seats
+	return item
+}
+
 // GET /api/v1/bookings — accepts JWT (user_id from token) or ?user_id= query param
 func GetUserBookings(c *gin.Context) {
 	var userID uint
@@ -69,43 +109,7 @@ func GetUserBookings(c *gin.Context) {
 
 	respBookings := make([]bookingHistoryItem, 0, len(bookings))
 	for _, b := range bookings {
-		item := bookingHistoryItem{
-			ID:             b.ID,
-			BookingRef:     b.BookingRef,
-			Status:         b.Status,
-			TotalAmount:    b.TotalAmount,
-			ConvenienceFee: b.ConvenienceFee,
-			TaxAmount:      b.TaxAmount,
-			PaymentStatus:  b.PaymentStatus,
-			BookedAt:       b.BookedAt.UTC().Format("2006-01-02T15:04:05Z"),
-			ShowDate:       b.Showtime.ShowDate,
-			StartTime:      b.Showtime.StartTime,
-			Format:         b.Showtime.Format,
-			Language:       b.Showtime.Language,
-		}
-
-		if b.Showtime.Movie.Title != "" {
-			item.MovieTitle = b.Showtime.Movie.Title
-		}
-		if b.Showtime.Movie.PosterURL != nil {
-			item.MoviePoster = *b.Showtime.Movie.PosterURL
-		}
-		item.ScreenName = b.Showtime.Screen.Name
-		item.ScreenType = b.Showtime.Screen.ScreenType
-		item.TheaterName = b.Showtime.Screen.Theater.Name
-
-		seats := make([]bookingSeatHistory, 0, len(b.BookingSeats))
-		for _, bs := range b.BookingSeats {
-			seats = append(seats, bookingSeatHistory{
-				SeatID:    bs.SeatID,
-				RowLabel:  bs.Seat.RowLabel,
-				ColNumber: bs.Seat.ColNumber,
-				SeatType:  bs.Seat.SeatType,
-				SeatPrice: bs.SeatPrice,
-			})
-		}
-		item.Seats = seats
-		respBookings = append(respBookings, item)
+		respBookings = append(respBookings, mapBookingHistoryItem(b))
 	}
 
 	c.JSON(http.StatusOK, gin.H{"bookings": respBookings})

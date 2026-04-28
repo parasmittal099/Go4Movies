@@ -51,6 +51,7 @@ func Migrate() {
         &models.Booking{},
         &models.BookingSeat{},
         &models.Payment{},
+		&models.QRTicket{},
     )
     if err != nil {
         log.Fatalf("Failed to auto-migrate: %v", err)
