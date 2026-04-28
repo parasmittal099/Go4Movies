@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
+import QRCode from "react-qr-code"
 import { useAuth } from "@/context/auth-context"
 import { fetchUserBookings } from "@/lib/api"
 import type { BookingDetail } from "@/lib/types"
@@ -235,50 +236,11 @@ export default function BookingConfirmationPage() {
               {/* QR Code placeholder */}
               <div className="bg-white p-5 rounded-2xl mb-8 shadow-inner">
                 <div className="w-44 h-44 bg-white flex items-center justify-center relative">
-                  {/* Generate a simple visual placeholder QR grid */}
-                  <svg viewBox="0 0 100 100" className="w-full h-full">
-                    {/* Top-left finder */}
-                    <rect x="5" y="5" width="25" height="25" rx="2" fill="#121212" />
-                    <rect x="9" y="9" width="17" height="17" rx="1" fill="white" />
-                    <rect x="12" y="12" width="11" height="11" rx="1" fill="#121212" />
-                    {/* Top-right finder */}
-                    <rect x="70" y="5" width="25" height="25" rx="2" fill="#121212" />
-                    <rect x="74" y="9" width="17" height="17" rx="1" fill="white" />
-                    <rect x="77" y="12" width="11" height="11" rx="1" fill="#121212" />
-                    {/* Bottom-left finder */}
-                    <rect x="5" y="70" width="25" height="25" rx="2" fill="#121212" />
-                    <rect x="9" y="74" width="17" height="17" rx="1" fill="white" />
-                    <rect x="12" y="77" width="11" height="11" rx="1" fill="#121212" />
-                    {/* Data dots */}
-                    {[35, 40, 45, 50, 55, 60].map((x) =>
-                      [35, 40, 45, 50, 55, 60, 65, 70, 75, 80].map((y) => (
-                        <rect
-                          key={`${x}-${y}`}
-                          x={x}
-                          y={y}
-                          width="4"
-                          height="4"
-                          rx="0.5"
-                          fill={(x + y) % 10 === 0 ? "#ea2a33" : "#121212"}
-                          opacity={(x * y) % 3 === 0 ? 1 : 0.6}
-                        />
-                      ))
-                    )}
-                    {[5, 10, 15, 20, 25, 35, 40, 45, 50, 55, 60].map((x) =>
-                      [35, 40, 45, 50, 55, 60].map((y) => (
-                        <rect
-                          key={`v-${x}-${y}`}
-                          x={y}
-                          y={x + 2}
-                          width="4"
-                          height="4"
-                          rx="0.5"
-                          fill={(x + y) % 8 === 0 ? "#ea2a33" : "#121212"}
-                          opacity={(x * y) % 5 === 0 ? 0.4 : 0.8}
-                        />
-                      ))
-                    )}
-                  </svg>
+                  <QRCode
+                    value={booking.qr_value || booking.ticket_code || booking.booking_ref}
+                    size={176}
+                    style={{ height: "auto", maxWidth: "100%", width: "100%" }}
+                  />
                   <div className="absolute inset-0 border-2 border-primary/15 rounded-lg" />
                 </div>
               </div>

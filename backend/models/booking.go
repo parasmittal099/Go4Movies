@@ -20,6 +20,7 @@ type Booking struct {
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
 	BookingSeats   []BookingSeat `gorm:"foreignKey:BookingID" json:"booking_seats,omitempty"`
+	QRTicket       *QRTicket     `gorm:"foreignKey:BookingID" json:"qr_ticket,omitempty"`
 }
 
 type BookingSeat struct {

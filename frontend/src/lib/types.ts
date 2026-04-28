@@ -161,5 +161,7 @@ export interface BookingDetail {
   format: string
   language: string
   seats: BookingSeatDetail[]
+  ticket_code?: string
+  qr_value?: string
 }
 
