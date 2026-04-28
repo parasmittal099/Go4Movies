@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"crypto/rand"
+	"encoding/base64"
 	"encoding/hex"
 	"errors"
 	"math"
@@ -209,6 +210,45 @@ func newBookingRef() string {
 	return "G4M-" + hex.EncodeToString(b)
 }
 
+func newTicketCode() (string, error) {
+	b := make([]byte, 18)
+	if _, err := rand.Read(b); err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(b), nil
+}
+
+func getOrCreateQRTicket(tx *gorm.DB, bookingID uint) (*models.QRTicket, error) {
+	var existing models.QRTicket
+	if err := tx.Where("booking_id = ?", bookingID).First(&existing).Error; err == nil {
+		return &existing, nil
+	} else if !errors.Is(err, gorm.ErrRecordNotFound) {
+		return nil, err
+	}
+
+	for i := 0; i < 5; i++ {
+		code, err := newTicketCode()
+		if err != nil {
+			return nil, err
+		}
+
+		qr := models.QRTicket{
+			BookingID:  bookingID,
+			TicketCode: code,
+			IsActive:   true,
+		}
+		if err := tx.Create(&qr).Error; err != nil {
+			if strings.Contains(err.Error(), "UNIQUE constraint failed: qr_tickets.ticket_code") {
+				continue
+			}
+			return nil, err
+		}
+		return &qr, nil
+	}
+
+	return nil, errors.New("failed to generate unique ticket code")
+}
+
 // POST /api/v1/checkout/confirm (JWT-protected)
 func ConfirmCheckout(c *gin.Context) {
 	var req checkoutRequest
@@ -233,6 +273,7 @@ func ConfirmCheckout(c *gin.Context) {
 
 	var booking models.Booking
 	var payment models.Payment
+	var qrTicket models.QRTicket
 
 	txErr := database.DB.Transaction(func(tx *gorm.DB) error {
 		// Re-check availability inside the transaction (serialised by SQLite's write lock)
@@ -289,6 +330,12 @@ func ConfirmCheckout(c *gin.Context) {
 			return err
 		}
 
+		ticket, err := getOrCreateQRTicket(tx, booking.ID)
+		if err != nil {
+			return err
+		}
+		qrTicket = *ticket
+
 		return nil
 	})
 
@@ -311,5 +358,7 @@ func ConfirmCheckout(c *gin.Context) {
 		"booking_ref": booking.BookingRef,
 		"quote":       quote,
 		"payment_id":  payment.ID,
+		"ticket_code": qrTicket.TicketCode,
+		"qr_value":    "G4M:" + qrTicket.TicketCode,
 	})
 }

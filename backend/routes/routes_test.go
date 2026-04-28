@@ -45,6 +45,7 @@ func TestRegisterRoutes_AllEndpoints(t *testing.T) {
 		{"GET", "/api/v1/movies/:id/showtimes"},
 		{"GET", "/api/v1/seats"},
 		{"GET", "/api/v1/bookings"},
+		{"GET", "/api/v1/bookings/by-ticket"},
 		{"POST", "/api/v1/auth/register"},
 		{"POST", "/api/v1/auth/login"},
 		{"POST", "/api/v1/checkout/preview"},
@@ -67,7 +68,7 @@ func TestRegisterRoutes_CountRoutes(t *testing.T) {
 	RegisterRoutes(r, cfg)
 
 	routes := r.Routes()
-	if len(routes) < 10 {
-		t.Errorf("expected at least 10 routes, got %d", len(routes))
+	if len(routes) < 11 {
+		t.Errorf("expected at least 11 routes, got %d", len(routes))
 	}
 }

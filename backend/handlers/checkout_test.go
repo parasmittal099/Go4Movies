@@ -321,11 +321,21 @@ func TestConfirmCheckout_CreatesBookingAndPayment(t *testing.T) {
 	if count != 1 {
 		t.Errorf("want 1 payment, got %d", count)
 	}
+	database.DB.Model(&models.QRTicket{}).Count(&count)
+	if count != 1 {
+		t.Errorf("want 1 qr_ticket, got %d", count)
+	}
 
 	var b models.Booking
 	database.DB.First(&b)
 	if b.Status != "CONFIRMED" || b.PaymentStatus != "PAID" {
 		t.Errorf("booking status want CONFIRMED/PAID, got %s/%s", b.Status, b.PaymentStatus)
+	}
+	if resp["ticket_code"] == nil || resp["ticket_code"] == "" {
+		t.Error("missing ticket_code")
+	}
+	if resp["qr_value"] == nil || resp["qr_value"] == "" {
+		t.Error("missing qr_value")
 	}
 }
 
