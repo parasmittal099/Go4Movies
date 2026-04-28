@@ -38,17 +38,20 @@ type bookingHistoryItem struct {
 	Seats          []bookingSeatHistory `json:"seats"`
 }
 
-// GET /api/v1/bookings?user_id=<id>
+// GET /api/v1/bookings — accepts JWT (user_id from token) or ?user_id= query param
 func GetUserBookings(c *gin.Context) {
-	userIDParam := c.Query("user_id")
-	if userIDParam == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id query parameter is required"})
-		return
-	}
-
-	userID, err := strconv.Atoi(userIDParam)
-	if err != nil || userID <= 0 {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id must be a positive integer"})
+	var userID uint
+	if uid, exists := c.Get("user_id"); exists {
+		userID = uid.(uint)
+	} else if param := c.Query("user_id"); param != "" {
+		id, err := strconv.Atoi(param)
+		if err != nil || id <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "user_id must be a positive integer"})
+			return
+		}
+		userID = uint(id)
+	} else {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user_id query parameter or Authorization header is required"})
 		return
 	}
 

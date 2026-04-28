@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/config"
 	"github.com/parasmittal099/backend-project/database"
+	"github.com/parasmittal099/backend-project/handlers"
 	"github.com/parasmittal099/backend-project/routes"
 	"github.com/parasmittal099/backend-project/workers"
 )
@@ -18,6 +19,8 @@ func main() {
 	database.Migrate()
 	database.MigratePlaintextPasswords()
 	database.Seed()
+
+	handlers.JWTSecret = cfg.JWTSecret
 
 	workers.StartBookingExpiry(database.DB, 1*time.Minute)
 

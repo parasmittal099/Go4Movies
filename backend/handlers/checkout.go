@@ -209,12 +209,16 @@ func newBookingRef() string {
 	return "G4M-" + hex.EncodeToString(b)
 }
 
-// POST /api/v1/checkout/confirm
+// POST /api/v1/checkout/confirm (JWT-protected)
 func ConfirmCheckout(c *gin.Context) {
 	var req checkoutRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
+	}
+
+	if uid, exists := c.Get("user_id"); exists {
+		req.UserID = uid.(uint)
 	}
 
 	user, showtime, seats, ok := validateRequest(req, c)

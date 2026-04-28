@@ -9,9 +9,13 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/parasmittal099/backend-project/database"
+	"github.com/parasmittal099/backend-project/middleware"
 	"github.com/parasmittal099/backend-project/models"
 	"golang.org/x/crypto/bcrypt"
 )
+
+// JWTSecret is set by main.go at startup from config.
+var JWTSecret string
 
 var usernamePattern = regexp.MustCompile(`^[a-zA-Z0-9_.-]+$`)
 
@@ -110,9 +114,17 @@ func Register(c *gin.Context) {
 		return
 	}
 
+	token, err := middleware.GenerateToken(user.ID, JWTSecret)
+	if err != nil {
+		log.Printf("register: token generation failed for user_id=%d: %v", user.ID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Registration failed. Please try again."})
+		return
+	}
+
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "User registered successfully",
 		"user":    user,
+		"token":   token,
 	})
 }
 
@@ -136,8 +148,16 @@ func Login(c *gin.Context) {
 		return
 	}
 
+	token, err := middleware.GenerateToken(user.ID, JWTSecret)
+	if err != nil {
+		log.Printf("login: token generation failed for user_id=%d: %v", user.ID, err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Login failed. Please try again."})
+		return
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Login successful",
 		"user":    user,
+		"token":   token,
 	})
 }

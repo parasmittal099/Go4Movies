@@ -8,7 +8,6 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
-	_ = cfg
 	r.Use(middleware.CORS())
 
 	v1 := r.Group("/api/v1")
@@ -20,8 +19,8 @@ func RegisterRoutes(r *gin.Engine, cfg *config.Config) {
 		v1.GET("/seats", handlers.GetShowtimeSeats)
 
 		v1.POST("/checkout/preview", handlers.PreviewCheckout)
-		v1.POST("/checkout/confirm", handlers.ConfirmCheckout)
-		v1.GET("/bookings", handlers.GetUserBookings)
+		v1.POST("/checkout/confirm", middleware.OptionalJWTAuth(cfg.JWTSecret), handlers.ConfirmCheckout)
+		v1.GET("/bookings", middleware.OptionalJWTAuth(cfg.JWTSecret), handlers.GetUserBookings)
 
 		auth := v1.Group("/auth")
 		{
