@@ -106,7 +106,7 @@ export default function PaymentPage() {
     setSubmitError(null)
     setSuccessMessage(null)
 
-    const normalizedCard = cardNumber.replace(/\s+/g, "")
+    const normalizedCard = cardNumber.replace(/[-\s]/g, "")
     if (!showtimeId || selectedSeatDbIds.length === 0) {
       setSubmitError("Missing showtime or seat details. Please reselect seats and try again.")
       return
@@ -206,9 +206,14 @@ export default function PaymentPage() {
                 <input
                   id="cardNumber"
                   type="text"
-                  placeholder="0000 0000 0000 0000"
+                  placeholder="0000-0000-0000-0000"
                   value={cardNumber}
-                  onChange={(e) => setCardNumber(e.target.value)}
+                  maxLength={19}
+                  onChange={(e) => {
+                    const digits = e.target.value.replace(/\D/g, "").slice(0, 16)
+                    const formatted = digits.match(/.{1,4}/g)?.join("-") ?? digits
+                    setCardNumber(formatted)
+                  }}
                   className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 font-mono placeholder:text-neutral-500 focus:border-primary focus:outline-none"
                 />
               </div>
@@ -221,9 +226,14 @@ export default function PaymentPage() {
                   <input
                     id="expiry"
                     type="text"
-                    placeholder="MM / YY"
+                    placeholder="MM/YY"
                     value={expiry}
-                    onChange={(e) => setExpiry(e.target.value)}
+                    maxLength={5}
+                    onChange={(e) => {
+                      const digits = e.target.value.replace(/\D/g, "").slice(0, 4)
+                      const formatted = digits.length > 2 ? `${digits.slice(0, 2)}/${digits.slice(2)}` : digits
+                      setExpiry(formatted)
+                    }}
                     className="w-full rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 font-mono placeholder:text-neutral-500 focus:border-primary focus:outline-none"
                   />
                 </div>
