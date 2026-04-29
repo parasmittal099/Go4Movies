@@ -135,29 +135,56 @@ Project URL: https://github.com/parasmittal099/Go4Movies
 - Booking history now preloads `QRTicket` relation
 - Each booking in the response includes `ticket_code` and `qr_value` if a QR ticket exists
 
+### 6. Frontend Sprint 4 Work Completed
+
+**QR confirmation integration**
+
+- `frontend/src/app/booking-confirmation/page.tsx` displays QR using `qr_value`/`ticket_code` from booking data
+- Added simplified print ticket layout for browser Save-as-PDF flow (QR, movie, date/time, seats, booking ID)
+
+**Payment + booking confirmation flow**
+
+- `frontend/src/app/payment/page.tsx` confirms checkout and routes to confirmation page using `booking_ref`
+- Confirmation page fetches booking details and renders ticket information (movie/date/time/seats)
+
+**Frontend QR helper/API typing updates**
+
+- `frontend/src/lib/api.ts` includes scanner-side helpers for ticket lookup integration
+- `frontend/src/lib/types.ts` includes QR fields in relevant frontend response types
+
 ---
 
-## Frontend Tests (Jest + React Testing Library)
+## Frontend Tests (Unit + Cypress)
 
-**13 test files, 108 test cases.** Run with `cd frontend && npm test`.
+Run unit tests with `cd frontend && npm test`.
+
+### Frontend Unit Tests (Jest + React Testing Library)
+
+**14 test files, 133 test cases**
 
 | # | Test File | Tests |
 |---|-----------|-------|
-| 1 | `src/lib/__tests__/api.test.ts` | 18 |
-| 2 | `src/components/booking/__tests__/seat-selection.test.tsx` | 13 |
-| 3 | `src/components/movies/__tests__/movie-detail.test.tsx` | 11 |
-| 4 | `src/components/layout/__tests__/header.test.tsx` | 9 |
-| 5 | `src/context/__tests__/auth-context.test.tsx` | 9 |
-| 6 | `src/components/ui/__tests__/zip-code-modal.test.tsx` | 9 |
-| 7 | `src/components/auth/__tests__/login-form.test.tsx` | 8 |
-| 8 | `src/components/auth/__tests__/signup-form.test.tsx` | 8 |
-| 9 | `src/hooks/__tests__/useZipCode.test.ts` | 6 |
-| 10 | `src/components/ui/__tests__/search-bar.test.tsx` | 5 |
-| 11 | `src/components/movies/__tests__/movie-grid.test.tsx` | 4 |
-| 12 | `src/components/movies/__tests__/movie-card.test.tsx` | 4 |
-| 13 | `src/context/__tests__/movies-context.test.tsx` | 4 |
+| 1 | `src/app/payment/__tests__/page.test.tsx` | 23 |
+| 2 | `src/lib/__tests__/api.test.ts` | 20 |
+| 3 | `src/components/booking/__tests__/seat-selection.test.tsx` | 13 |
+| 4 | `src/components/movies/__tests__/movie-detail.test.tsx` | 11 |
+| 5 | `src/components/layout/__tests__/header.test.tsx` | 9 |
+| 6 | `src/context/__tests__/auth-context.test.tsx` | 9 |
+| 7 | `src/components/ui/__tests__/zip-code-modal.test.tsx` | 9 |
+| 8 | `src/components/auth/__tests__/login-form.test.tsx` | 8 |
+| 9 | `src/components/auth/__tests__/signup-form.test.tsx` | 8 |
+| 10 | `src/hooks/__tests__/useZipCode.test.ts` | 6 |
+| 11 | `src/components/ui/__tests__/search-bar.test.tsx` | 5 |
+| 12 | `src/components/movies/__tests__/movie-grid.test.tsx` | 4 |
+| 13 | `src/components/movies/__tests__/movie-card.test.tsx` | 4 |
+| 14 | `src/context/__tests__/movies-context.test.tsx` | 4 |
 
-**Frontend Total: 108 tests across 13 files**
+**Frontend Unit Test Total: 133 tests across 14 files**
+
+### Frontend Cypress Tests (E2E)
+
+- No Cypress tests are currently present in this repository snapshot.
+- E2E coverage is currently Jest/RTL-based component and page tests.
 
 ---
 
@@ -248,7 +275,7 @@ Project URL: https://github.com/parasmittal099/Go4Movies
 
 ---
 
-## Backend API Documentation
+## Updated Backend API Documentation
 
 Base URL: `http://localhost:8080`
 
