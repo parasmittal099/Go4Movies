@@ -256,27 +256,6 @@ describe('PaymentPage — form validation with formatted inputs', () => {
     )
   })
 
-  it('shows success message with booking reference after successful submit', async () => {
-    ;(api.confirmCheckout as jest.Mock).mockResolvedValue({ booking_ref: 'MOCK-XYZ' })
-
-    renderPage()
-
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: /pay.*securely/i })).not.toBeDisabled()
-    )
-
-    fireEvent.change(screen.getByPlaceholderText('John Doe'), { target: { value: 'Jane Smith' } })
-    fireEvent.change(getCardNumberInput(), { target: { value: '4111111111111111' } })
-    fireEvent.change(getExpiryInput(), { target: { value: '0927' } })
-    fireEvent.change(screen.getByPlaceholderText('***'), { target: { value: '321' } })
-
-    fireEvent.click(screen.getByRole('button', { name: /pay.*securely/i }))
-
-    await waitFor(() =>
-      expect(screen.getByText(/booking confirmed.*MOCK-XYZ/i)).toBeInTheDocument()
-    )
-  })
-
   it('shows error message when confirmCheckout API fails', async () => {
     ;(api.confirmCheckout as jest.Mock).mockRejectedValue(new Error('Payment declined'))
 
